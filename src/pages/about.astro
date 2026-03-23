@@ -1,0 +1,72 @@
+---
+import PageLayout from '@/layouts/PageLayout.astro';
+---
+
+<PageLayout title="About - Salik Foundation" description="Learn about the Salik Foundation's mission to spread the Qur'an's message and care for orphans worldwide.">
+  <main class="min-h-screen bg-black text-white">
+    <!-- Hero -->
+    <section class="flex items-center justify-center bg-gradient-to-b from-[#1a1a2e] to-black px-6 py-32">
+      <div class="max-w-3xl text-center">
+        <h1 class="text-4xl font-light tracking-wide md:text-5xl" style="font-family: Georgia, serif;">
+          About Salik Foundation
+        </h1>
+        <p class="mt-6 text-lg leading-relaxed text-white/70">
+          We are a registered charity with two missions: delivering the timeless message of the Qur'an and providing vital care, education, and support for orphans worldwide. Our work is rooted in the principles of compassion, justice, and service to humanity.
+        </p>
+      </div>
+    </section>
+
+    <!-- Mission -->
+    <section class="bg-[#4AB3E2]/10 px-6 py-20">
+      <div class="mx-auto max-w-4xl">
+        <h2 class="text-center text-3xl font-light tracking-wide" style="font-family: Georgia, serif;">
+          Our Mission
+        </h2>
+        <p class="mt-6 text-center text-lg text-white/70">
+          To illuminate lives with the Qur'an's guidance and uplift orphans through care, education, and empowerment.
+        </p>
+
+        <div class="mt-12 grid gap-8 md:grid-cols-2">
+          <div class="rounded-lg border border-white/10 bg-black/40 p-8">
+            <div class="mb-4 text-3xl">📖</div>
+            <h3 class="text-xl font-light tracking-wide" style="font-family: Georgia, serif;">
+              Spread the Qur'an's Message
+            </h3>
+            <p class="mt-3 text-white/60">
+              Sharing divine guidance with communities worldwide through education, distribution, and outreach.
+            </p>
+          </div>
+          <div class="rounded-lg border border-white/10 bg-black/40 p-8">
+            <div class="mb-4 text-3xl">🤲</div>
+            <h3 class="text-xl font-light tracking-wide" style="font-family: Georgia, serif;">
+              Orphan Aid
+            </h3>
+            <p class="mt-3 text-white/60">
+              Supporting orphans with care, resources, education, and healthcare to ensure their bright future.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compassion -->
+    <section class="px-6 py-20">
+      <div class="mx-auto max-w-3xl text-center">
+        <h2 class="text-3xl font-light tracking-wide" style="font-family: Georgia, serif;">
+          Guided by Compassion and Service
+        </h2>
+        <p class="mt-6 text-lg leading-relaxed text-white/70">
+          Guided by compassion, justice, and service to humanity, the Salik Foundation spreads the Qur'an's message and provides care, education, and opportunity for orphans around the world.
+        </p>
+        <div class="mt-8">
+          <a
+            href="/donate"
+            class="inline-block rounded-sm border border-[#4AB3E2] bg-[#4AB3E2]/20 px-10 py-4 tracking-[0.15em] uppercase text-white transition-all hover:bg-[#4AB3E2]/40"
+          >
+            Support Our Mission
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</PageLayout>

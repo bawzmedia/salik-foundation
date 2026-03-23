@@ -1,0 +1,94 @@
+---
+import PageLayout from '@/layouts/PageLayout.astro';
+---
+
+<PageLayout title="Contact - Salik Foundation" description="Get in touch with the Salik Foundation. We'd love to hear from you.">
+  <main class="min-h-screen bg-black text-white">
+    <!-- Hero -->
+    <section class="flex items-center justify-center bg-gradient-to-b from-[#1a1a2e] to-black px-6 py-32">
+      <div class="max-w-3xl text-center">
+        <h1 class="text-4xl font-light tracking-wide md:text-5xl" style="font-family: Georgia, serif;">
+          Get in Touch
+        </h1>
+        <p class="mt-6 text-lg text-white/70">
+          Have questions about our programs or want to get involved? We'd love to hear from you.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="px-6 py-20">
+      <div class="mx-auto grid max-w-4xl gap-12 md:grid-cols-2">
+        <!-- Contact Form -->
+        <form class="space-y-6" method="POST" action="/api/contact">
+          <div>
+            <label for="name" class="block text-sm tracking-wide text-white/50">Your Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              class="mt-2 w-full border-b border-white/20 bg-transparent px-2 py-3 text-white outline-none transition-colors focus:border-[#4AB3E2]"
+            />
+          </div>
+          <div>
+            <label for="email" class="block text-sm tracking-wide text-white/50">Your Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              class="mt-2 w-full border-b border-white/20 bg-transparent px-2 py-3 text-white outline-none transition-colors focus:border-[#4AB3E2]"
+            />
+          </div>
+          <div>
+            <label for="message" class="block text-sm tracking-wide text-white/50">Your Message</label>
+            <textarea
+              id="message"
+              name="message"
+              rows="5"
+              required
+              class="mt-2 w-full border-b border-white/20 bg-transparent px-2 py-3 text-white outline-none transition-colors focus:border-[#4AB3E2] resize-none"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-sm border border-[#4AB3E2] bg-[#4AB3E2]/20 py-4 tracking-[0.15em] uppercase text-white transition-all hover:bg-[#4AB3E2]/40"
+          >
+            Send Message
+          </button>
+        </form>
+
+        <!-- Contact Info -->
+        <div class="space-y-8">
+          <div>
+            <h3 class="text-sm tracking-[0.2em] uppercase text-[#4AB3E2]">Email</h3>
+            <a href="mailto:info@salikfoundation.com" class="mt-2 block text-lg text-white/70 hover:text-white transition-colors">
+              info@salikfoundation.com
+            </a>
+          </div>
+          <div>
+            <h3 class="text-sm tracking-[0.2em] uppercase text-[#4AB3E2]">Phone</h3>
+            <a href="tel:+16479779901" class="mt-2 block text-lg text-white/70 hover:text-white transition-colors">
+              +1 (647) 977 9901
+            </a>
+          </div>
+          <div>
+            <h3 class="text-sm tracking-[0.2em] uppercase text-[#4AB3E2]">Address</h3>
+            <p class="mt-2 text-lg text-white/70">
+              13750 100th Ave Unit #2010<br />
+              Surrey, BC, V3T 0L3<br />
+              Canada
+            </p>
+          </div>
+          <div>
+            <h3 class="text-sm tracking-[0.2em] uppercase text-[#4AB3E2]">Charity Registration</h3>
+            <p class="mt-2 text-white/70">
+              777416629RR0001
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</PageLayout>

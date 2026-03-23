@@ -1,28 +1,26 @@
 {
   "name": "salik-foundation",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "generate-placeholders": "npx tsx scripts/generate-placeholders.ts"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^4.2.1",
+    "@astrojs/sitemap": "^3.3.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "astro": "^5.7.10",
     "gsap": "^3.14.2",
-    "next": "16.2.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "canvas": "^3.2.1",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,0 +1,44 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Guided by compassion, justice, and service to humanity, the Salik Foundation spreads the Qur'an's message and provides care, education, and opportunity for orphans around the world." } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content="charity, orphans, Quran, Islamic foundation, humanitarian aid, education, sponsorship, dawah" />
+    <link rel="icon" type="image/png" href="/salik-icon.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/salik-foundation-logo.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <title>{title}</title>
+  </head>
+  <body class="antialiased">
+    <slot />
+    <noscript>
+      <div style="padding: 2rem; color: white; background-color: black;">
+        <h1>Salik Foundation</h1>
+        <p>Spreading the Message of the Qur'an. Caring for Orphans Worldwide.</p>
+        <p>Guided by compassion, justice, and service to humanity.</p>
+        <p>Contact us: info@salikfoundation.com | +1 (647) 977 9901</p>
+      </div>
+    </noscript>
+  </body>
+</html>

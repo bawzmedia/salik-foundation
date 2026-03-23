@@ -1,0 +1,70 @@
+---
+import PageLayout from '@/layouts/PageLayout.astro';
+---
+
+<PageLayout title="Donate - Salik Foundation" description="Support the Salik Foundation's mission to spread the Qur'an's message and care for orphans worldwide.">
+  <main class="min-h-screen bg-black text-white">
+    <!-- Hero -->
+    <section class="flex items-center justify-center bg-gradient-to-b from-[#1a1a2e] to-black px-6 py-32">
+      <div class="max-w-3xl text-center">
+        <h1 class="text-4xl font-light tracking-wide md:text-5xl" style="font-family: Georgia, serif;">
+          Answer the Call
+        </h1>
+        <p class="mt-6 text-lg text-white/70">
+          Your generous contribution supports the spread of the Qur'an's message and provides care for orphans around the world.
+        </p>
+      </div>
+    </section>
+
+    <!-- Donation Options -->
+    <section class="px-6 py-20">
+      <div class="mx-auto max-w-4xl">
+        <div class="grid gap-8 md:grid-cols-2">
+          <!-- General Donation -->
+          <div class="rounded-lg border border-[#4AB3E2]/30 bg-[#4AB3E2]/5 p-8">
+            <h2 class="text-2xl font-light tracking-wide" style="font-family: Georgia, serif;">
+              General Donation
+            </h2>
+            <p class="mt-3 text-white/60">
+              Support our mission with a one-time or monthly contribution. Every dollar makes a difference.
+            </p>
+            <div class="mt-6 grid grid-cols-3 gap-3">
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">$25</button>
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">$50</button>
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">$100</button>
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">$250</button>
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">$500</button>
+              <button class="rounded border border-white/20 bg-white/5 py-3 text-center text-white transition-all hover:border-[#4AB3E2] hover:bg-[#4AB3E2]/20">Other</button>
+            </div>
+            <button class="mt-6 w-full rounded-sm border border-[#4AB3E2] bg-[#4AB3E2]/20 py-4 tracking-[0.15em] uppercase text-white transition-all hover:bg-[#4AB3E2]/40">
+              Donate Now
+            </button>
+          </div>
+
+          <!-- Orphan Sponsorship -->
+          <div class="rounded-lg border border-[#D4A843]/30 bg-[#D4A843]/5 p-8">
+            <h2 class="text-2xl font-light tracking-wide" style="font-family: Georgia, serif;">
+              Sponsor an Orphan
+            </h2>
+            <p class="mt-3 text-white/60">
+              Change a child's life with monthly sponsorship. Provide education, healthcare, nutrition, and a safe environment.
+            </p>
+            <div class="mt-6 rounded border border-[#D4A843]/20 bg-black/30 p-6 text-center">
+              <div class="text-3xl font-light text-[#D4A843]" style="font-family: Georgia, serif;">$50</div>
+              <div class="mt-1 text-sm text-white/50">per month</div>
+              <div class="mt-3 text-xs text-white/40">Covers education, meals, healthcare & shelter</div>
+            </div>
+            <button class="mt-6 w-full rounded-sm border border-[#D4A843] bg-[#D4A843]/20 py-4 tracking-[0.15em] uppercase text-white transition-all hover:bg-[#D4A843]/40">
+              Sponsor Today
+            </button>
+          </div>
+        </div>
+
+        <!-- Tax receipt note -->
+        <p class="mt-8 text-center text-sm text-white/40">
+          Salik Foundation is a registered charity (No. 777416629RR0001). All donations are tax-deductible.
+        </p>
+      </div>
+    </section>
+  </main>
+</PageLayout>
