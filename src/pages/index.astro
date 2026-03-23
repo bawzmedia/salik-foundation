@@ -1,19 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ScrollDrivenExperience from '@/components/cinematic/ScrollDrivenExperience';
 import '@/styles/global.css';
 ---
 
 <BaseLayout title="Salik Foundation - Spreading the Message of the Qur'an, Caring for Orphans">
-  <div id="cinematic-root"></div>
-
-  <script>
-    import { createElement } from 'react';
-    import { createRoot } from 'react-dom/client';
-    import CinematicExperience from '@/components/cinematic/CinematicExperience';
-
-    const root = document.getElementById('cinematic-root');
-    if (root) {
-      createRoot(root).render(createElement(CinematicExperience));
-    }
-  </script>
+  <ScrollDrivenExperience client:only="react" />
 </BaseLayout>
