@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SECTIONS } from "@/lib/frames";
+import { ERAS } from "@/lib/frames";
 
 const ERA_BACKGROUNDS: Record<number, string> = {
   1: "radial-gradient(ellipse at 30% 40%, #2a3a4a 0%, #0d1b2a 40%, #050a12 100%)", // ice/fjord
@@ -29,13 +29,13 @@ export default function ScrollDrivenExperience() {
 
       // Eras use first 78% of scroll, closer uses remaining 22%
       const eraScrollEnd = docHeight * 0.78;
-      const eraHeight = eraScrollEnd / SECTIONS.length;
-      const eraIndex = Math.min(Math.floor(scrollTop / eraHeight), SECTIONS.length - 1);
+      const eraHeight = eraScrollEnd / ERAS.length;
+      const eraIndex = Math.min(Math.floor(scrollTop / eraHeight), ERAS.length - 1);
       setCurrentEra(eraIndex);
 
       // Calculate text phases for each section
       const phases: Record<number, number> = {};
-      SECTIONS.forEach((section, i) => {
+      ERAS.forEach((section, i) => {
         const sectionStart = i * eraHeight;
         const sectionEnd = (i + 1) * eraHeight;
         if (scrollTop >= sectionStart && scrollTop <= sectionEnd) {
@@ -60,12 +60,12 @@ export default function ScrollDrivenExperience() {
   return (
     <div ref={containerRef}>
       {/* Scroll spacer — each era gets 100vh + extra for closer */}
-      <div style={{ height: `${(SECTIONS.length + 2) * 100}vh` }} />
+      <div style={{ height: `${(ERAS.length + 2) * 100}vh` }} />
 
       {/* Fixed viewport layer */}
       <div className="fixed inset-0 z-0">
         {/* Background layers with crossfade */}
-        {SECTIONS.map((section, i) => {
+        {ERAS.map((section, i) => {
           const phase = textPhases[i] || 0;
           let bgOpacity = 0;
           if (i === currentEra) {
@@ -76,10 +76,10 @@ export default function ScrollDrivenExperience() {
 
           return (
             <div
-              key={`bg-${section.id}`}
+              key={`bg-${section.eraNumber}`}
               className="absolute inset-0 transition-opacity duration-700"
               style={{
-                background: ERA_BACKGROUNDS[section.id],
+                background: ERA_BACKGROUNDS[section.eraNumber],
                 opacity: bgOpacity,
               }}
             />
@@ -125,7 +125,7 @@ export default function ScrollDrivenExperience() {
         </div>
 
         {/* Era indicator (top-left) */}
-        {SECTIONS.map((section, i) => {
+        {ERAS.map((section, i) => {
           const phase = textPhases[i] || 0;
           let opacity = 0;
           if (i === currentEra && phase > 0.05 && phase < 0.95) {
@@ -136,12 +136,12 @@ export default function ScrollDrivenExperience() {
 
           return (
             <div
-              key={`era-ind-${section.id}`}
+              key={`era-ind-${section.eraNumber}`}
               className="absolute left-8 top-24 z-20"
               style={{ opacity }}
             >
               <div className="text-xs tracking-[0.3em] uppercase" style={{ color: section.colorAccent }}>
-                Era {section.id} of 7
+                Era {section.eraNumber} of 7
               </div>
               <div className="mt-1 text-sm font-light tracking-wide text-white/70">
                 {section.era}
@@ -151,7 +151,7 @@ export default function ScrollDrivenExperience() {
         })}
 
         {/* Text overlays (center) */}
-        {SECTIONS.map((section, i) => {
+        {ERAS.map((section, i) => {
           if (!section.textOverlay) return null;
           const phase = textPhases[i] || 0;
 
@@ -168,7 +168,7 @@ export default function ScrollDrivenExperience() {
 
           return (
             <div
-              key={`text-${section.id}`}
+              key={`text-${section.eraNumber}`}
               className="absolute inset-0 z-10 flex items-center justify-center px-8"
             >
               <div className="max-w-3xl text-center">
@@ -225,7 +225,7 @@ export default function ScrollDrivenExperience() {
 
         {/* Micro CTAs */}
         {[2, 3, 5, 6].map((sectionId) => {
-          const section = SECTIONS[sectionId - 1];
+          const section = ERAS[sectionId - 1];
           const phase = textPhases[sectionId - 1] || 0;
           const ctaTexts: Record<number, { text: string; href: string }> = {
             2: { text: "They built empires of knowledge. Help build the next one.", href: "/donate" },
@@ -266,12 +266,12 @@ export default function ScrollDrivenExperience() {
           style={{ opacity: scrollProgress > 0.02 && scrollProgress < 0.95 ? 1 : 0, transition: "opacity 0.5s" }}
         >
           <div className="flex justify-center gap-2 pb-2">
-            {SECTIONS.map((s, i) => {
+            {ERAS.map((s, i) => {
               const isActive = i === currentEra;
               const isPast = (textPhases[i] || 0) >= 0.95;
               return (
                 <div
-                  key={s.id}
+                  key={s.eraNumber}
                   className="h-1.5 w-1.5 rounded-full transition-all duration-500"
                   style={{
                     backgroundColor: isActive ? s.colorAccent : isPast ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)",
@@ -286,7 +286,7 @@ export default function ScrollDrivenExperience() {
               className="h-full transition-[width] duration-100"
               style={{
                 width: `${scrollProgress * 100}%`,
-                backgroundColor: SECTIONS[currentEra]?.colorAccent || "#4AB3E2",
+                backgroundColor: ERAS[currentEra]?.colorAccent || "#4AB3E2",
                 opacity: 0.6,
               }}
             />
