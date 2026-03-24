@@ -6,12 +6,15 @@ import {
   MAX_RETRIES,
   RETRY_DELAY_MS,
   FALLBACK_TIMEOUT_MS,
+  FLASH_FRAME_COUNT,
   getFramePath,
+  getFlashFramePath,
   getResolutionTier,
 } from "@/lib/frames";
 
 interface UseFrameLoaderReturn {
   frames: React.MutableRefObject<(HTMLImageElement | null)[]>;
+  flashFrames: React.MutableRefObject<(HTMLImageElement | null)[]>;
   loadingProgress: number;
   isInitialLoadComplete: boolean;
   isFallback: boolean;
@@ -41,6 +44,7 @@ function loadImageWithRetry(
 
 export function useFrameLoader(): UseFrameLoaderReturn {
   const frames = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const flashFrames = useRef<(HTMLImageElement | null)[]>(new Array(FLASH_FRAME_COUNT).fill(null));
   const loadedBatches = useRef<Set<number>>(new Set());
   const [loadedCount, setLoadedCount] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
@@ -97,11 +101,23 @@ export function useFrameLoader(): UseFrameLoaderReturn {
       clearTimeout(fallbackTimer);
     });
 
+    // Load flash frames if any
+    if (FLASH_FRAME_COUNT > 0) {
+      for (let i = 1; i <= FLASH_FRAME_COUNT; i++) {
+        loadImageWithRetry(getFlashFramePath(i))
+          .then((img) => {
+            flashFrames.current[i - 1] = img;
+          })
+          .catch(() => {});
+      }
+    }
+
     return () => clearTimeout(fallbackTimer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     frames,
+    flashFrames,
     loadingProgress: loadedCount / TOTAL_FRAMES,
     isInitialLoadComplete,
     isFallback,
