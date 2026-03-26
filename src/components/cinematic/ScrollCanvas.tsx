@@ -363,56 +363,81 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           style={{ zIndex: 2 }}
         />
 
-        {/* Scroll hint */}
+        {/* Cutscene scroll prompt */}
         <div
-          className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+          className="fixed bottom-12 left-0 right-0 flex justify-center pointer-events-none"
           style={{
             zIndex: 10,
             opacity: showScrollHint ? 1 : 0,
-            transition: "opacity 0.8s ease",
+            transition: "opacity 1.5s ease",
           }}
         >
           <div
-            className="flex flex-col items-center gap-2 select-none"
-            style={{
-              animation: "scrollBounce 2s ease-in-out infinite",
-            }}
+            className="flex flex-col items-center select-none"
+            style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
           >
-            <span
-              className="text-lg md:text-xl tracking-[0.35em] uppercase"
-              style={{
-                color: "#C8A84E",
-                fontFamily: "'Montserrat', 'Arial', sans-serif",
-                fontWeight: 400,
-                textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
-              }}
-            >
-              Scroll
-            </span>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              style={{
-                filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))",
-              }}
-            >
-              <path
-                d="M4 8L10 14L16 8"
-                stroke="#C8A84E"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            {/* Horizontal lines flanking the text — like a HUD element */}
+            <div className="flex items-center gap-4 mb-3">
+              <div style={{
+                width: "60px", height: "1px",
+                background: "linear-gradient(to right, transparent, #C8A84E)",
+                animation: "lineGlow 2.5s ease-in-out infinite",
+              }} />
+              <span
+                className="text-sm md:text-base tracking-[0.5em] uppercase"
+                style={{
+                  color: "#C8A84E",
+                  fontFamily: "'Montserrat', 'Arial', sans-serif",
+                  fontWeight: 300,
+                  textShadow: "0 0 15px rgba(200,168,78,0.5), 0 0 30px rgba(200,168,78,0.2), 0 2px 4px rgba(0,0,0,0.9)",
+                  animation: "textGlow 2.5s ease-in-out infinite",
+                }}
+              >
+                Scroll
+              </span>
+              <div style={{
+                width: "60px", height: "1px",
+                background: "linear-gradient(to left, transparent, #C8A84E)",
+                animation: "lineGlow 2.5s ease-in-out infinite",
+              }} />
+            </div>
+
+            {/* Animated chevron cascade — like a game "continue" prompt */}
+            <div className="flex flex-col items-center" style={{ gap: "2px" }}>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.4))" }}>
+                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.3))" }}>
+                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.2))" }}>
+                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
         </div>
 
         <style>{`
-          @keyframes scrollBounce {
+          @keyframes cutsceneFloat {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+            50% { transform: translateY(-5px); }
+          }
+          @keyframes chevronCascade {
+            0% { opacity: 0; transform: translateY(-4px); }
+            40% { opacity: 1; transform: translateY(0); }
+            70% { opacity: 0.3; transform: translateY(4px); }
+            100% { opacity: 0; transform: translateY(6px); }
+          }
+          @keyframes textGlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+          }
+          @keyframes lineGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
           }
         `}</style>
       </div>
