@@ -19,6 +19,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const isPlayingRef = useRef(false);
     const currentSectionRef = useRef(0);
     const [currentSection, setCurrentSection] = useState(0);
+    const [showScrollHint, setShowScrollHint] = useState(false);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -112,6 +113,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
           stopIdleLoop();
           isPlayingRef.current = true;
+          setShowScrollHint(false);
           const section = SECTIONS[sectionIndex];
           const startFrame = section.startFrame - 1; // 0-indexed
           const endFrame = section.endFrame - 1; // 0-indexed
@@ -136,6 +138,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 ? (section.startFrame - 1) / TOTAL_FRAMES
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
+
+              // Show scroll hint unless we're on the last section
+              if (sectionIndex < SECTIONS.length - 1) {
+                setShowScrollHint(true);
+              }
 
               resolve();
               return;
@@ -356,6 +363,34 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           style={{ zIndex: 2 }}
         />
 
+        {/* Scroll hint */}
+        <div
+          className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+          style={{
+            zIndex: 10,
+            opacity: showScrollHint ? 1 : 0,
+            transition: "opacity 0.8s ease",
+          }}
+        >
+          <span
+            className="text-sm tracking-[0.25em] uppercase select-none"
+            style={{
+              color: "#C8A84E",
+              fontFamily: "Georgia, serif",
+              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              animation: "scrollBounce 2s ease-in-out infinite",
+            }}
+          >
+            Scroll
+          </span>
+        </div>
+
+        <style>{`
+          @keyframes scrollBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+        `}</style>
       </div>
     );
   }
