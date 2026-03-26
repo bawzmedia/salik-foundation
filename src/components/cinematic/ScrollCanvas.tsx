@@ -372,17 +372,41 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             transition: "opacity 0.8s ease",
           }}
         >
-          <span
-            className="text-2xl md:text-3xl tracking-[0.3em] uppercase select-none"
+          <div
+            className="flex flex-col items-center gap-2 select-none"
             style={{
-              color: "#C8A84E",
-              fontFamily: "Georgia, serif",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
               animation: "scrollBounce 2s ease-in-out infinite",
             }}
           >
-            Scroll
-          </span>
+            <span
+              className="text-lg md:text-xl tracking-[0.35em] uppercase"
+              style={{
+                color: "#C8A84E",
+                fontFamily: "'Montserrat', 'Arial', sans-serif",
+                fontWeight: 400,
+                textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              }}
+            >
+              Scroll
+            </span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              style={{
+                filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))",
+              }}
+            >
+              <path
+                d="M4 8L10 14L16 8"
+                stroke="#C8A84E"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
         </div>
 
         <style>{`
