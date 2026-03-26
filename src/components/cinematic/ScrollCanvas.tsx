@@ -11,8 +11,6 @@ interface ScrollCanvasProps {
   onFallback?: () => void;
 }
 
-type GateState = "waiting" | "showing" | "passed";
-
 const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
   function ScrollCanvas({ onProgressChange, onFallback }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,10 +20,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const currentSectionRef = useRef(0);
     const [currentSection, setCurrentSection] = useState(0);
     const scrollCooldownRef = useRef(false);
-    const [ctaGate, setCtaGate] = useState<GateState>("waiting");
-    const ctaGateRef = useRef<GateState>("waiting");
     const idleLoopRef = useRef<number | null>(null);
-    const IDLE_LOOP_FRAMES = 15; // ping-pong last 15 frames of each clip
 
     const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame } =
       useFrameLoader();
@@ -100,52 +95,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       return () => window.removeEventListener("resize", resizeCanvas);
     }, [resizeCanvas]);
 
-    // Stop idle ping-pong loop
+    // Stop idle loop
     const stopIdleLoop = useCallback(() => {
       if (idleLoopRef.current !== null) {
         cancelAnimationFrame(idleLoopRef.current);
         idleLoopRef.current = null;
       }
     }, []);
-
-    // Start idle ping-pong loop on last N frames of current section
-    const startIdleLoop = useCallback((sectionIndex: number) => {
-      stopIdleLoop();
-      const section = SECTIONS[sectionIndex];
-      if (!section) return;
-
-      const loopEnd = section.endFrame - 1; // 0-indexed
-      const loopStart = Math.max(section.startFrame - 1, loopEnd - IDLE_LOOP_FRAMES + 1);
-      let frameIdx = loopEnd;
-      let direction = -1; // start going backward
-      const FPS_INTERVAL = 1000 / 12; // slower for subtle effect (12fps)
-      let lastTime = performance.now();
-
-      const animate = (now: number) => {
-        if (isPlayingRef.current || isFlashingRef.current) {
-          idleLoopRef.current = null;
-          return;
-        }
-
-        const elapsed = now - lastTime;
-        if (elapsed >= FPS_INTERVAL) {
-          lastTime = now - (elapsed % FPS_INTERVAL);
-          drawFrameAtIndex(frameIdx);
-
-          frameIdx += direction;
-          if (frameIdx <= loopStart) {
-            direction = 1; // reverse to forward
-            frameIdx = loopStart;
-          } else if (frameIdx >= loopEnd) {
-            direction = -1; // reverse to backward
-            frameIdx = loopEnd;
-          }
-        }
-        idleLoopRef.current = requestAnimationFrame(animate);
-      };
-
-      idleLoopRef.current = requestAnimationFrame(animate);
-    }, [drawFrameAtIndex, stopIdleLoop]);
 
     // Play a section's frames as a video clip at 24fps
     const playSection = useCallback(
@@ -181,11 +137,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
-              // Start idle ping-pong loop after clip 1
-              if (sectionIndex === 0) {
-                startIdleLoop(sectionIndex);
-              }
-
               resolve();
               return;
             }
@@ -210,7 +161,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           requestAnimationFrame(playNext);
         });
       },
-      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop, startIdleLoop]
+      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop]
     );
 
     // Play multiple sections back-to-back
@@ -223,14 +174,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       [playSection]
     );
 
-    // Handle CTA click — play clips 2 and 3, then resume scroll
-    const handleCtaClick = useCallback(() => {
-      stopIdleLoop();
-      ctaGateRef.current = "passed";
-      setCtaGate("passed");
-      playSections(1, 2);
-    }, [playSections, stopIdleLoop]);
-
     // Handle scroll/wheel/touch to trigger next or previous clip
     useEffect(() => {
       if (!isInitialLoadComplete) return;
@@ -238,9 +181,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       const handleWheel = (e: WheelEvent) => {
         e.preventDefault();
         if (isPlayingRef.current || isFlashingRef.current || scrollCooldownRef.current) return;
-        // Block scroll while CTA is showing
-        if (ctaGateRef.current === "showing") return;
-
         const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
         if (delta > 10) {
@@ -271,8 +211,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
       const handleTouchEnd = (e: TouchEvent) => {
         if (isPlayingRef.current || isFlashingRef.current || scrollCooldownRef.current) return;
-        if (ctaGateRef.current === "showing") return;
-
         const touchEndX = e.changedTouches[0].clientX;
         const touchEndY = e.changedTouches[0].clientY;
         const diffX = touchStartX - touchEndX;
@@ -327,14 +265,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       };
     }, [isInitialLoadComplete, playSection]);
 
-    // Auto-play first section on load, then show CTA
+    // Auto-play first section on load
     useEffect(() => {
-      if (isInitialLoadComplete && ctaGateRef.current === "waiting") {
+      if (isInitialLoadComplete) {
         drawFrameAtIndex(0);
-        setTimeout(async () => {
-          await playSection(0);
-          ctaGateRef.current = "showing";
-          setCtaGate("showing");
+        setTimeout(() => {
+          playSection(0);
         }, 500);
       }
     }, [isInitialLoadComplete, drawFrameAtIndex, playSection]);
@@ -420,22 +356,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           style={{ zIndex: 2 }}
         />
 
-        {/* CTA after clip 1 — "Answer the Call" */}
-        {ctaGate === "showing" && (
-          <div
-            className="fixed inset-0 flex items-center justify-center"
-            style={{ zIndex: 10 }}
-          >
-            <button
-              onClick={handleCtaClick}
-              className="group relative overflow-hidden border border-white/40 bg-black/30 px-12 py-5 backdrop-blur-sm transition-all duration-500 hover:border-[#4AB3E2]/80 hover:bg-black/50"
-            >
-              <span className="relative text-xl tracking-[0.3em] text-white uppercase md:text-2xl" style={{ fontFamily: "Georgia, serif" }}>
-                Begin the Journey
-              </span>
-            </button>
-          </div>
-        )}
       </div>
     );
   }
