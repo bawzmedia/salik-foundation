@@ -376,45 +376,47 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             className="flex flex-col items-center select-none"
             style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
           >
-            {/* Horizontal lines flanking the text — like a HUD element */}
+            {/* Horizontal lines flanking the text — HUD element */}
             <div className="flex items-center gap-5 mb-4">
               <div style={{
-                width: "100px", height: "2px",
-                background: "linear-gradient(to right, transparent, #C8A84E)",
+                width: "120px", height: "2px",
+                background: "linear-gradient(to right, transparent, #E8D080)",
+                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
                 animation: "lineGlow 2.5s ease-in-out infinite",
               }} />
               <span
-                className="text-2xl md:text-3xl tracking-[0.5em] uppercase"
+                className="text-3xl md:text-4xl tracking-[0.5em] uppercase"
                 style={{
-                  color: "#C8A84E",
+                  color: "#F0D878",
                   fontFamily: "'Montserrat', 'Arial', sans-serif",
-                  fontWeight: 600,
-                  textShadow: "0 0 20px rgba(200,168,78,0.6), 0 0 40px rgba(200,168,78,0.3), 0 2px 6px rgba(0,0,0,0.9)",
+                  fontWeight: 700,
+                  textShadow: "0 0 25px rgba(240,216,120,0.9), 0 0 50px rgba(240,216,120,0.5), 0 0 80px rgba(200,168,78,0.3), 0 2px 6px rgba(0,0,0,0.9)",
                   animation: "textGlow 2.5s ease-in-out infinite",
                 }}
               >
                 Scroll
               </span>
               <div style={{
-                width: "100px", height: "2px",
-                background: "linear-gradient(to left, transparent, #C8A84E)",
+                width: "120px", height: "2px",
+                background: "linear-gradient(to left, transparent, #E8D080)",
+                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
                 animation: "lineGlow 2.5s ease-in-out infinite",
               }} />
             </div>
 
-            {/* Animated chevron cascade — like a game "continue" prompt */}
+            {/* Animated chevron cascade */}
             <div className="flex flex-col items-center" style={{ gap: "3px" }}>
-              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.5))" }}>
-                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.8))" }}>
+                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.4))" }}>
-                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.6))" }}>
+                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.3))" }}>
-                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.4))" }}>
+                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </div>
@@ -426,18 +428,18 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             50% { transform: translateY(-5px); }
           }
           @keyframes chevronCascade {
-            0% { opacity: 0; transform: translateY(-4px); }
+            0% { opacity: 0.1; transform: translateY(-4px); }
             40% { opacity: 1; transform: translateY(0); }
-            70% { opacity: 0.3; transform: translateY(4px); }
-            100% { opacity: 0; transform: translateY(6px); }
+            70% { opacity: 0.5; transform: translateY(4px); }
+            100% { opacity: 0.1; transform: translateY(6px); }
           }
           @keyframes textGlow {
-            0%, 100% { opacity: 0.7; }
+            0%, 100% { opacity: 0.85; }
             50% { opacity: 1; }
           }
           @keyframes lineGlow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
           }
         `}</style>
       </div>
