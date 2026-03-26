@@ -373,7 +373,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           }}
         >
           <span
-            className="text-sm tracking-[0.25em] uppercase select-none"
+            className="text-2xl md:text-3xl tracking-[0.3em] uppercase select-none"
             style={{
               color: "#C8A84E",
               fontFamily: "Georgia, serif",
