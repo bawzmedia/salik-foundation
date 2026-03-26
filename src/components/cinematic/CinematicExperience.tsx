@@ -32,28 +32,12 @@ export default function CinematicExperience() {
 
       {/* Floating nav links — no bar, just text on screen */}
       <div className="pointer-events-none fixed left-0 right-0 top-0 z-30 flex items-center justify-between px-6 py-4">
-        <a href="/" className="pointer-events-auto flex items-baseline gap-1">
-          <span
-            className="text-xl md:text-2xl font-bold tracking-wider uppercase"
-            style={{
-              color: "#4AB3E2",
-              fontFamily: "'Montserrat', sans-serif",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
-            }}
-          >
-            SALIK
-          </span>
-          <span
-            className="text-xs md:text-sm tracking-[0.35em] uppercase"
-            style={{
-              color: "#ffffff",
-              fontFamily: "'Montserrat', sans-serif",
-              fontWeight: 400,
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
-            }}
-          >
-            Foundation
-          </span>
+        <a href="/" className="pointer-events-auto">
+          <img
+            src="/salik-foundation-logo.png"
+            alt="Salik Foundation"
+            className="h-8 md:h-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+          />
         </a>
         <div className="pointer-events-auto hidden items-center gap-6 text-sm tracking-[0.2em] uppercase md:flex" style={{ fontFamily: "'Montserrat', sans-serif" }}>
           <a
