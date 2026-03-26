@@ -377,44 +377,44 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
           >
             {/* Horizontal lines flanking the text — like a HUD element */}
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-5 mb-4">
               <div style={{
-                width: "60px", height: "1px",
+                width: "100px", height: "2px",
                 background: "linear-gradient(to right, transparent, #C8A84E)",
                 animation: "lineGlow 2.5s ease-in-out infinite",
               }} />
               <span
-                className="text-sm md:text-base tracking-[0.5em] uppercase"
+                className="text-2xl md:text-3xl tracking-[0.5em] uppercase"
                 style={{
                   color: "#C8A84E",
                   fontFamily: "'Montserrat', 'Arial', sans-serif",
-                  fontWeight: 300,
-                  textShadow: "0 0 15px rgba(200,168,78,0.5), 0 0 30px rgba(200,168,78,0.2), 0 2px 4px rgba(0,0,0,0.9)",
+                  fontWeight: 600,
+                  textShadow: "0 0 20px rgba(200,168,78,0.6), 0 0 40px rgba(200,168,78,0.3), 0 2px 6px rgba(0,0,0,0.9)",
                   animation: "textGlow 2.5s ease-in-out infinite",
                 }}
               >
                 Scroll
               </span>
               <div style={{
-                width: "60px", height: "1px",
+                width: "100px", height: "2px",
                 background: "linear-gradient(to left, transparent, #C8A84E)",
                 animation: "lineGlow 2.5s ease-in-out infinite",
               }} />
             </div>
 
             {/* Animated chevron cascade — like a game "continue" prompt */}
-            <div className="flex flex-col items-center" style={{ gap: "2px" }}>
-              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.4))" }}>
-                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="flex flex-col items-center" style={{ gap: "3px" }}>
+              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.5))" }}>
+                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.3))" }}>
-                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.4))" }}>
+                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 6px rgba(200,168,78,0.2))" }}>
-                <path d="M4 2L12 10L20 2" stroke="#C8A84E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="36" height="18" viewBox="0 0 36 18" fill="none"
+                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 8px rgba(200,168,78,0.3))" }}>
+                <path d="M6 4L18 14L30 4" stroke="#C8A84E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </div>
