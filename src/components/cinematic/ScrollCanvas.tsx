@@ -151,8 +151,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             const done = reverse ? frameIdx < startFrame : frameIdx > endFrame;
             if (done) {
               isPlayingRef.current = false;
-              currentSectionRef.current = sectionIndex;
-              setCurrentSection(sectionIndex);
+              // Forward: we're at the end of this section
+              // Reverse: we're at the start, so logically at the end of the previous section
+              const newSection = reverse ? Math.max(0, sectionIndex - 1) : sectionIndex;
+              currentSectionRef.current = newSection;
+              setCurrentSection(newSection);
 
               const progress = reverse
                 ? (section.startFrame - 1) / TOTAL_FRAMES
@@ -176,8 +179,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
               }
 
-              // Show scroll hint unless we're on the last section
-              if (sectionIndex < SECTIONS.length - 1) {
+              // Show scroll hint unless we're at the very start (section 0 reversed)
+              if (!(sectionIndex === 0 && reverse)) {
                 setShowScrollHint(true);
               }
 
@@ -276,6 +279,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
         if (delta > 10) {
+          // Forward: play next section
           const nextSection = currentSectionRef.current + 1;
           if (nextSection < SECTIONS.length) {
             scrollCooldownRef.current = true;
@@ -283,10 +287,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             setTimeout(() => { scrollCooldownRef.current = false; }, 300);
           }
         } else if (delta < -10) {
-          const prevSection = currentSectionRef.current - 1;
-          if (prevSection >= 0) {
+          // Backward: reverse CURRENT section (takes you back to its start)
+          const cur = currentSectionRef.current;
+          if (cur >= 0) {
             scrollCooldownRef.current = true;
-            playSection(prevSection, true);
+            playSection(cur, true);
             setTimeout(() => { scrollCooldownRef.current = false; }, 300);
           }
         }
@@ -317,10 +322,10 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               setTimeout(() => { scrollCooldownRef.current = false; }, 300);
             }
           } else {
-            const prevSection = currentSectionRef.current - 1;
-            if (prevSection >= 0) {
+            const cur = currentSectionRef.current;
+            if (cur >= 0) {
               scrollCooldownRef.current = true;
-              playSection(prevSection, true);
+              playSection(cur, true);
               setTimeout(() => { scrollCooldownRef.current = false; }, 300);
             }
           }
@@ -335,8 +340,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           const nextSection = currentSectionRef.current + 1;
           if (nextSection < SECTIONS.length) playSection(nextSection);
         } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-          const prevSection = currentSectionRef.current - 1;
-          if (prevSection >= 0) playSection(prevSection, true);
+          const cur = currentSectionRef.current;
+          if (cur >= 0) playSection(cur, true);
         }
       };
 
