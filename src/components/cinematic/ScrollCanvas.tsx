@@ -25,6 +25,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
     const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
+    const showHadithRef = useRef(false);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -120,16 +121,16 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           isPlayingRef.current = true;
           setShowScrollHint(false);
           // Dissolve captions when scrolling forward away from section 0
-          if (showHadith && sectionIndex > 0 && !reverse) {
+          if (showHadithRef.current && sectionIndex > 0 && !reverse) {
             setHadithDissolving(true);
             setTimeout(() => {
               setShowHadith(false);
+              showHadithRef.current = false;
               setHadithDissolving(false);
               setCaptionLines(0);
             }, 1500);
           }
           // Clear captions immediately when scrolling back to section 0
-          // (the frame-driven logic will re-show them at the right frames)
           if (sectionIndex === 0 && reverse) {
             setHadithDissolving(false);
           }
@@ -164,13 +165,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   // Scrolled back to beginning — show ummah logo at frame 0
                   setIntroPhase("ummah");
                   setIntroOpacity(0);
-                  setShowHadith(false);
+                  setShowHadith(false); showHadithRef.current = false;
                   setCaptionLines(0);
                 } else {
                   // Played forward to end — captions fully visible
                   setIntroPhase("done");
                   setIntroOpacity(0);
-                  setShowHadith(true);
+                  setShowHadith(true); showHadithRef.current = true;
                   setCaptionLines(3);
                 }
               }
@@ -222,18 +223,18 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 // Caption lines — frame position determines how many are visible
                 if (f < 165) {
                   setCaptionLines(0);
-                  setShowHadith(false);
+                  setShowHadith(false); showHadithRef.current = false;
                 } else if (f < 190) {
                   setCaptionLines(1);
-                  setShowHadith(true);
+                  setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
                 } else if (f < 215) {
                   setCaptionLines(2);
-                  setShowHadith(true);
+                  setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
                 } else {
                   setCaptionLines(3);
-                  setShowHadith(true);
+                  setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
                 }
               }
@@ -252,7 +253,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           requestAnimationFrame(playNext);
         });
       },
-      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop, showHadith]
+      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop]
     );
 
     // Play multiple sections back-to-back
