@@ -27,6 +27,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [hadithDissolving, setHadithDissolving] = useState(false);
     const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
     const showHadithRef = useRef(false);
+    const [baalAyah, setBaalAyah] = useState(false);
+    const [baalOpacity, setBaalOpacity] = useState(0);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -242,6 +244,37 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   setCaptionLines(3);
                   setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
+                }
+              }
+
+              // Drive Baal ayah during section 1 (clip 3 — prostration scene)
+              // Section 1: frames 242-392, 0-indexed = 241-391
+              if (sectionIndex === 1) {
+                const f = frameIdx;
+                const sStart = 241; // 0-indexed start of section 1
+                const rel = f - sStart; // relative frame within section
+
+                if (rel < 30) {
+                  // First 30 frames — no text yet, let scene establish
+                  setBaalAyah(false);
+                  setBaalOpacity(0);
+                } else if (rel < 50) {
+                  // Fade in
+                  setBaalAyah(true);
+                  setBaalOpacity((rel - 30) / 20);
+                } else if (rel < 130) {
+                  // Hold
+                  setBaalAyah(true);
+                  setBaalOpacity(1);
+                } else {
+                  // Fade out near end
+                  setBaalAyah(true);
+                  setBaalOpacity(Math.max(0, 1 - (rel - 130) / 20));
+                }
+              } else {
+                if (baalAyah) {
+                  setBaalAyah(false);
+                  setBaalOpacity(0);
                 }
               }
 
@@ -560,6 +593,49 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }}
               >
                 Arabia lived in total darkness.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Baal ayah — top of frame during prostration scene */}
+        {baalAyah && (
+          <div
+            className="fixed top-0 left-0 right-0 flex justify-center pointer-events-none"
+            style={{
+              zIndex: 9,
+              opacity: baalOpacity,
+              paddingTop: "8vh",
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            <div className="text-center px-6 max-w-3xl">
+              <p
+                className="text-lg md:text-2xl lg:text-3xl leading-relaxed mb-3"
+                style={{
+                  color: "#F0D878",
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  lineHeight: 1.7,
+                }}
+              >
+                &ldquo;Do you call upon Baal and abandon<br />
+                the Best of Creators &mdash;<br />
+                Allah, your Lord and the Lord<br />
+                of your forefathers?&rdquo;
+              </p>
+              <p
+                className="text-xs md:text-sm tracking-[0.3em] uppercase"
+                style={{
+                  color: "rgba(240,216,120,0.6)",
+                  fontFamily: "'Montserrat', 'Arial', sans-serif",
+                  fontWeight: 300,
+                  textShadow: "0 2px 20px rgba(0,0,0,0.9)",
+                }}
+              >
+                Qur&rsquo;an 37:125-126
               </p>
             </div>
           </div>
