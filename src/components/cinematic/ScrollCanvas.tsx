@@ -22,6 +22,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "text" | "done">("none");
     const [introOpacity, setIntroOpacity] = useState(0);
+    const [showHadith, setShowHadith] = useState(false);
+    const [hadithDissolving, setHadithDissolving] = useState(false);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -116,6 +118,14 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           stopIdleLoop();
           isPlayingRef.current = true;
           setShowScrollHint(false);
+          // Dissolve hadith when scrolling away from section 0
+          if (showHadith && sectionIndex > 0) {
+            setHadithDissolving(true);
+            setTimeout(() => {
+              setShowHadith(false);
+              setHadithDissolving(false);
+            }, 2000);
+          }
           const section = SECTIONS[sectionIndex];
           const startFrame = section.startFrame - 1; // 0-indexed
           const endFrame = section.endFrame - 1; // 0-indexed
@@ -141,10 +151,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
-              // Clear intro after first section
+              // Clear intro after first section, show hadith
               if (sectionIndex === 0) {
                 setIntroPhase("done");
                 setIntroOpacity(0);
+                setShowHadith(true);
               }
 
               // Show scroll hint unless we're on the last section
@@ -209,7 +220,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           requestAnimationFrame(playNext);
         });
       },
-      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop]
+      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop, showHadith]
     );
 
     // Play multiple sections back-to-back
@@ -470,6 +481,43 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           </div>
         )}
 
+        {/* Hadith overlay — appears after clip 1+2 on the idol shrine still */}
+        {showHadith && (
+          <div
+            className="fixed inset-0 flex items-center justify-center pointer-events-none"
+            style={{ zIndex: 9 }}
+          >
+            <div
+              className={`text-center px-8 max-w-4xl ${hadithDissolving ? "sand-dissolve" : "hadith-fade-in"}`}
+            >
+              <p
+                className="text-lg md:text-2xl lg:text-3xl leading-relaxed mb-6"
+                style={{
+                  color: "#F0D878",
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  lineHeight: 1.8,
+                }}
+              >
+                &ldquo;I was sent to perfect good character.&rdquo;
+              </p>
+              <p
+                className="text-sm md:text-base tracking-[0.3em] uppercase"
+                style={{
+                  color: "rgba(240,216,120,0.7)",
+                  fontFamily: "'Montserrat', 'Arial', sans-serif",
+                  fontWeight: 300,
+                  textShadow: "0 2px 20px rgba(0,0,0,0.9)",
+                }}
+              >
+                — Prophet Muhammad ﷺ &nbsp;|&nbsp; Al-Adab Al-Mufrad
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Cutscene scroll prompt */}
         <div
           className="fixed bottom-12 left-0 right-0 flex justify-center pointer-events-none"
@@ -547,6 +595,48 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           @keyframes lineGlow {
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
+          }
+          @keyframes hadithFadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .hadith-fade-in {
+            animation: hadithFadeIn 2s ease-out forwards;
+          }
+          @keyframes sandDissolve {
+            0% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              filter: blur(0px);
+              letter-spacing: normal;
+            }
+            30% {
+              opacity: 0.8;
+              transform: translateY(-5px) scale(1.01);
+              filter: blur(0.5px);
+              letter-spacing: 0.1em;
+            }
+            60% {
+              opacity: 0.4;
+              transform: translateY(-15px) scale(1.03);
+              filter: blur(2px);
+              letter-spacing: 0.3em;
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(-40px) scale(1.08);
+              filter: blur(6px);
+              letter-spacing: 0.8em;
+            }
+          }
+          .sand-dissolve {
+            animation: sandDissolve 2s ease-in forwards;
+          }
+          .sand-dissolve p {
+            animation: sandDissolve 2s ease-in forwards;
+          }
+          .sand-dissolve p:last-child {
+            animation-delay: 0.3s;
           }
         `}</style>
       </div>
