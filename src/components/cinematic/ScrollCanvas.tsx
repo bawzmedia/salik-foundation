@@ -695,7 +695,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
             {sectionQuote === 2 && (
               <div
-                className="flex flex-col items-center justify-center h-full"
+                className="flex flex-col items-center pt-[6vh]"
                 style={{
                   opacity: quoteDissolving ? undefined : baalFadeProgress,
                   transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
