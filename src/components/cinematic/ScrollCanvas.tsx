@@ -501,18 +501,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   lineHeight: 1.8,
                 }}
               >
-                &ldquo;I was sent to perfect good character.&rdquo;
-              </p>
-              <p
-                className="text-sm md:text-base tracking-[0.3em] uppercase"
-                style={{
-                  color: "rgba(240,216,120,0.7)",
-                  fontFamily: "'Montserrat', 'Arial', sans-serif",
-                  fontWeight: 300,
-                  textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                }}
-              >
-                — Prophet Muhammad ﷺ &nbsp;|&nbsp; Al-Adab Al-Mufrad
+                No law. No scripture. No compass.<br />
+                For over five hundred years,<br />
+                Arabia lived in total darkness.
               </p>
             </div>
           </div>
