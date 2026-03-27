@@ -158,12 +158,26 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             const done = reverse ? frameIdx < startFrame : frameIdx > endFrame;
             if (done) {
               isPlayingRef.current = false;
-              currentSectionRef.current = sectionIndex;
-              setCurrentSection(sectionIndex);
-              atSectionStartRef.current = reverse; // reverse = at start, forward = at end
+
+              if (reverse && sectionIndex > 0) {
+                // Land on the previous section's last frame (HD still)
+                const prevSection = sectionIndex - 1;
+                const prevEndFrame = SECTIONS[prevSection].endFrame - 1; // 0-indexed
+                currentFrameRef.current = prevEndFrame;
+                drawFrameAtIndex(prevEndFrame);
+                currentSectionRef.current = prevSection;
+                setCurrentSection(prevSection);
+                atSectionStartRef.current = false; // at END of previous section
+              } else {
+                currentSectionRef.current = sectionIndex;
+                setCurrentSection(sectionIndex);
+                atSectionStartRef.current = reverse; // reverse section 0 = at start
+              }
 
               const progress = reverse
-                ? (section.startFrame - 1) / TOTAL_FRAMES
+                ? (reverse && sectionIndex > 0
+                    ? SECTIONS[sectionIndex - 1].endFrame / TOTAL_FRAMES
+                    : (section.startFrame - 1) / TOTAL_FRAMES)
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
