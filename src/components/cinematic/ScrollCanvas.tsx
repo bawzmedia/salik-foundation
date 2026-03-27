@@ -704,7 +704,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 <img
                   src="/quran-open.webp"
                   alt="The Holy Qur'an"
-                  className="h-40 md:h-56 lg:h-64 mb-6"
+                  className="h-56 md:h-72 lg:h-96 mb-6"
                   style={{
                     filter: "drop-shadow(0 0 40px rgba(200,168,78,0.4)) drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
                   }}
