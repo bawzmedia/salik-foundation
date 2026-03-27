@@ -131,9 +131,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               setCaptionLines(0);
             }, 1500);
           }
-          // Clear captions immediately when scrolling back to section 0
+          // When reversing section 0, ensure captions are visible and not dissolving
+          // The frame-driven logic will handle showing/hiding them at the right frames
           if (sectionIndex === 0 && reverse) {
             setHadithDissolving(false);
+            setShowHadith(true);
+            showHadithRef.current = true;
+            setCaptionLines(3); // Start fully visible, frame logic will reduce as we reverse
           }
           const section = SECTIONS[sectionIndex];
           const startFrame = section.startFrame - 1; // 0-indexed
