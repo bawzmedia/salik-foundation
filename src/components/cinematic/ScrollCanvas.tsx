@@ -303,7 +303,20 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   setQuoteDissolving(false);
                   setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
                 }
-              } else if (sectionQuoteRef.current !== null && sectionIndex !== 1) {
+              } else if (sectionIndex === 2) {
+                // Section 2: clip 4 — "The Qur'an Descends" (0-indexed: 392-542)
+                const rel = frameIdx - 392;
+                // 151 frames total, appear ~15 frames from end (rel 136+)
+                if (rel < 136) {
+                  setSectionQuote(null);
+                  sectionQuoteRef.current = null;
+                } else {
+                  setSectionQuote(2);
+                  sectionQuoteRef.current = 2;
+                  setQuoteDissolving(false);
+                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                }
+              } else if (sectionQuoteRef.current !== null) {
                 // Clear quotes when playing other sections
                 setSectionQuote(null);
                 sectionQuoteRef.current = null;
@@ -676,6 +689,51 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   }}
                 >
                   Qur&rsquo;an 37:125-126
+                </p>
+              </div>
+            )}
+
+            {sectionQuote === 2 && (
+              <div
+                className="flex flex-col items-center justify-center h-full"
+                style={{
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                }}
+              >
+                <img
+                  src="/quran-open.webp"
+                  alt="The Holy Qur'an"
+                  className="h-40 md:h-56 lg:h-64 mb-6"
+                  style={{
+                    filter: "drop-shadow(0 0 40px rgba(200,168,78,0.4)) drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
+                  }}
+                />
+                <p
+                  className="text-lg md:text-2xl lg:text-3xl leading-relaxed text-center px-8 max-w-3xl mb-3"
+                  style={{
+                    color: "#F0D878",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                    lineHeight: 1.7,
+                  }}
+                >
+                  &ldquo;A Book We have sent down to you<br />
+                  so that you may bring mankind<br />
+                  out of darkness and into light.&rdquo;
+                </p>
+                <p
+                  className="text-xs md:text-sm tracking-[0.3em] uppercase"
+                  style={{
+                    color: "rgba(240,216,120,0.5)",
+                    fontFamily: "'Montserrat', 'Arial', sans-serif",
+                    fontWeight: 300,
+                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
+                  }}
+                >
+                  Qur&rsquo;an 14:1
                 </p>
               </div>
             )}
