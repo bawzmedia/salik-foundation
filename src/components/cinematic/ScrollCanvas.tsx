@@ -19,6 +19,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const isPlayingRef = useRef(false);
     const currentSectionRef = useRef(0);
     const [currentSection, setCurrentSection] = useState(0);
+    const atSectionStartRef = useRef(true); // true = at start of section, false = at end
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "done">("none");
     const [introOpacity, setIntroOpacity] = useState(0);
@@ -151,11 +152,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             const done = reverse ? frameIdx < startFrame : frameIdx > endFrame;
             if (done) {
               isPlayingRef.current = false;
-              // Forward: we're at the end of this section
-              // Reverse: we're at the start, so logically at the end of the previous section
-              const newSection = reverse ? Math.max(0, sectionIndex - 1) : sectionIndex;
-              currentSectionRef.current = newSection;
-              setCurrentSection(newSection);
+              currentSectionRef.current = sectionIndex;
+              setCurrentSection(sectionIndex);
+              atSectionStartRef.current = reverse; // reverse = at start, forward = at end
 
               const progress = reverse
                 ? (section.startFrame - 1) / TOTAL_FRAMES
@@ -279,19 +278,21 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
         if (delta > 10) {
-          // Forward: play next section
-          const nextSection = currentSectionRef.current + 1;
-          if (nextSection < SECTIONS.length) {
+          // Forward: if at start of section, play it forward. If at end, play next.
+          const cur = currentSectionRef.current;
+          const target = atSectionStartRef.current ? cur : cur + 1;
+          if (target < SECTIONS.length) {
             scrollCooldownRef.current = true;
-            playSection(nextSection);
+            playSection(target);
             setTimeout(() => { scrollCooldownRef.current = false; }, 300);
           }
         } else if (delta < -10) {
-          // Backward: reverse CURRENT section (takes you back to its start)
+          // Backward: if at end of section, reverse it. If at start, reverse previous.
           const cur = currentSectionRef.current;
-          if (cur >= 0) {
+          const target = atSectionStartRef.current ? cur - 1 : cur;
+          if (target >= 0) {
             scrollCooldownRef.current = true;
-            playSection(cur, true);
+            playSection(target, true);
             setTimeout(() => { scrollCooldownRef.current = false; }, 300);
           }
         }
@@ -315,17 +316,19 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
         if (Math.abs(diffY) > 50 && Math.abs(diffY) > Math.abs(diffX)) {
           if (diffY > 0) {
-            const nextSection = currentSectionRef.current + 1;
-            if (nextSection < SECTIONS.length) {
+            const cur = currentSectionRef.current;
+            const target = atSectionStartRef.current ? cur : cur + 1;
+            if (target < SECTIONS.length) {
               scrollCooldownRef.current = true;
-              playSection(nextSection);
+              playSection(target);
               setTimeout(() => { scrollCooldownRef.current = false; }, 300);
             }
           } else {
             const cur = currentSectionRef.current;
-            if (cur >= 0) {
+            const target = atSectionStartRef.current ? cur - 1 : cur;
+            if (target >= 0) {
               scrollCooldownRef.current = true;
-              playSection(cur, true);
+              playSection(target, true);
               setTimeout(() => { scrollCooldownRef.current = false; }, 300);
             }
           }
@@ -337,11 +340,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         if (isPlayingRef.current || isFlashingRef.current) return;
 
         if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-          const nextSection = currentSectionRef.current + 1;
-          if (nextSection < SECTIONS.length) playSection(nextSection);
+          const cur = currentSectionRef.current;
+          const target = atSectionStartRef.current ? cur : cur + 1;
+          if (target < SECTIONS.length) playSection(target);
         } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
           const cur = currentSectionRef.current;
-          if (cur >= 0) playSection(cur, true);
+          const target = atSectionStartRef.current ? cur - 1 : cur;
+          if (target >= 0) playSection(target, true);
         }
       };
 
