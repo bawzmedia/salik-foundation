@@ -653,7 +653,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               <div
                 className="absolute left-0 top-0 px-8 md:px-16"
                 style={{
-                  paddingTop: "42vh",
+                  paddingTop: "22vh",
                   maxWidth: "600px",
                   opacity: quoteDissolving ? undefined : baalFadeProgress,
                   transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 15}px)`,
