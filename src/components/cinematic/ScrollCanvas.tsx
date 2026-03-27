@@ -178,6 +178,17 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 currentSectionRef.current = prevSection;
                 setCurrentSection(prevSection);
                 atSectionStartRef.current = false; // at END of previous section
+                // Restore that section's quote
+                if (prevSection > 0) {
+                  setSectionQuote(prevSection);
+                  sectionQuoteRef.current = prevSection;
+                  setQuoteDissolving(false);
+                } else if (prevSection === 0) {
+                  // Section 0 uses the caption system
+                  setShowHadith(true); showHadithRef.current = true;
+                  setCaptionLines(3);
+                  setHadithDissolving(false);
+                }
               } else {
                 currentSectionRef.current = sectionIndex;
                 setCurrentSection(sectionIndex);
