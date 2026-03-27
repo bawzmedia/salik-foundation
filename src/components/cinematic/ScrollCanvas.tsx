@@ -119,14 +119,19 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           stopIdleLoop();
           isPlayingRef.current = true;
           setShowScrollHint(false);
-          // Dissolve captions when scrolling away from section 0
-          if (showHadith && sectionIndex > 0) {
+          // Dissolve captions when scrolling forward away from section 0
+          if (showHadith && sectionIndex > 0 && !reverse) {
             setHadithDissolving(true);
             setTimeout(() => {
               setShowHadith(false);
               setHadithDissolving(false);
               setCaptionLines(0);
             }, 1500);
+          }
+          // Clear captions immediately when scrolling back to section 0
+          // (the frame-driven logic will re-show them at the right frames)
+          if (sectionIndex === 0 && reverse) {
+            setHadithDissolving(false);
           }
           const section = SECTIONS[sectionIndex];
           const startFrame = section.startFrame - 1; // 0-indexed
@@ -153,13 +158,21 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
-              // Clear intro after first section
+              // Section 0 completion — depends on direction
               if (sectionIndex === 0) {
-                setIntroPhase("done");
-                setIntroOpacity(0);
-                // Hadith is already showing from frame-driven logic
-                setShowHadith(true);
-                setCaptionLines(3);
+                if (reverse) {
+                  // Scrolled back to beginning — show ummah logo at frame 0
+                  setIntroPhase("ummah");
+                  setIntroOpacity(0);
+                  setShowHadith(false);
+                  setCaptionLines(0);
+                } else {
+                  // Played forward to end — captions fully visible
+                  setIntroPhase("done");
+                  setIntroOpacity(0);
+                  setShowHadith(true);
+                  setCaptionLines(3);
+                }
               }
 
               // Show scroll hint unless we're on the last section
@@ -178,39 +191,50 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               drawFrameAtIndex(frameIdx);
 
               // Drive intro overlays during section 0 (clip 1+2)
-              if (sectionIndex === 0 && !reverse) {
+              // Works identically forward and reverse — frame position determines state
+              if (sectionIndex === 0) {
                 const f = frameIdx; // 0-indexed frame
+
+                // Logos
                 if (f < 10) {
                   setIntroPhase("ummah");
-                  setIntroOpacity(f / 10); // fade in
+                  setIntroOpacity(f / 10);
                 } else if (f < 50) {
                   setIntroPhase("ummah");
-                  setIntroOpacity(1); // hold
+                  setIntroOpacity(1);
                 } else if (f < 65) {
                   setIntroPhase("ummah");
-                  setIntroOpacity(1 - (f - 50) / 15); // fade out
+                  setIntroOpacity(1 - (f - 50) / 15);
                 } else if (f < 75) {
                   setIntroPhase("salik");
-                  setIntroOpacity((f - 65) / 10); // fade in
+                  setIntroOpacity((f - 65) / 10);
                 } else if (f < 130) {
                   setIntroPhase("salik");
-                  setIntroOpacity(1); // hold
+                  setIntroOpacity(1);
                 } else if (f < 145) {
                   setIntroPhase("salik");
-                  setIntroOpacity(1 - (f - 130) / 15); // fade out
+                  setIntroOpacity(1 - (f - 130) / 15);
                 } else {
                   setIntroPhase("done");
                   setIntroOpacity(0);
                 }
 
-                // Caption lines — appear during shrine footage
-                if (f >= 165 && f < 190) {
-                  setCaptionLines(1); // "No law. No scripture. No compass."
+                // Caption lines — frame position determines how many are visible
+                if (f < 165) {
+                  setCaptionLines(0);
+                  setShowHadith(false);
+                } else if (f < 190) {
+                  setCaptionLines(1);
                   setShowHadith(true);
-                } else if (f >= 190 && f < 215) {
-                  setCaptionLines(2); // + "For over five hundred years,"
-                } else if (f >= 215) {
-                  setCaptionLines(3); // + "Arabia lived in total darkness."
+                  setHadithDissolving(false);
+                } else if (f < 215) {
+                  setCaptionLines(2);
+                  setShowHadith(true);
+                  setHadithDissolving(false);
+                } else {
+                  setCaptionLines(3);
+                  setShowHadith(true);
+                  setHadithDissolving(false);
                 }
               }
 
