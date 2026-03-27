@@ -24,6 +24,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [introOpacity, setIntroOpacity] = useState(0);
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
+    const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -118,13 +119,14 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           stopIdleLoop();
           isPlayingRef.current = true;
           setShowScrollHint(false);
-          // Dissolve hadith when scrolling away from section 0
+          // Dissolve captions when scrolling away from section 0
           if (showHadith && sectionIndex > 0) {
             setHadithDissolving(true);
             setTimeout(() => {
               setShowHadith(false);
               setHadithDissolving(false);
-            }, 2000);
+              setCaptionLines(0);
+            }, 1500);
           }
           const section = SECTIONS[sectionIndex];
           const startFrame = section.startFrame - 1; // 0-indexed
@@ -151,11 +153,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
-              // Clear intro after first section, show hadith
+              // Clear intro after first section
               if (sectionIndex === 0) {
                 setIntroPhase("done");
                 setIntroOpacity(0);
+                // Hadith is already showing from frame-driven logic
                 setShowHadith(true);
+                setCaptionLines(3);
               }
 
               // Show scroll hint unless we're on the last section
@@ -197,12 +201,25 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 } else if (f < 155) {
                   setIntroPhase("text");
                   setIntroOpacity((f - 145) / 10); // fade in
-                } else if (f < 220) {
+                } else if (f < 195) {
                   setIntroPhase("text");
                   setIntroOpacity(1); // hold
-                } else {
+                } else if (f < 210) {
                   setIntroPhase("text");
-                  setIntroOpacity(1 - (f - 220) / 20); // fade out
+                  setIntroOpacity(1 - (f - 195) / 15); // fade out
+                } else {
+                  setIntroPhase("done");
+                  setIntroOpacity(0);
+                }
+
+                // Caption lines — appear during shrine footage
+                if (f >= 165 && f < 190) {
+                  setCaptionLines(1); // "No law. No scripture. No compass."
+                  setShowHadith(true);
+                } else if (f >= 190 && f < 215) {
+                  setCaptionLines(2); // + "For over five hundred years,"
+                } else if (f >= 215) {
+                  setCaptionLines(3); // + "Arabia lived in total darkness."
                 }
               }
 
@@ -481,28 +498,56 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           </div>
         )}
 
-        {/* Hadith overlay — appears after clip 1+2 on the idol shrine still */}
+        {/* Caption lines — fade in one at a time over shrine footage */}
         {showHadith && (
           <div
-            className="fixed inset-0 flex items-center justify-center pointer-events-none"
+            className={`fixed inset-0 flex items-center justify-center pointer-events-none ${hadithDissolving ? "caption-dissolve" : ""}`}
             style={{ zIndex: 9 }}
           >
-            <div
-              className={`text-center px-8 max-w-4xl ${hadithDissolving ? "sand-dissolve" : "hadith-fade-in"}`}
-            >
+            <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-4">
               <p
-                className="text-lg md:text-2xl lg:text-3xl leading-relaxed mb-6"
+                className="text-xl md:text-3xl lg:text-4xl"
                 style={{
                   color: "#F0D878",
                   fontFamily: "Georgia, 'Times New Roman', serif",
                   fontStyle: "italic",
                   fontWeight: 400,
                   textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                  lineHeight: 1.8,
+                  opacity: captionLines >= 1 ? 1 : 0,
+                  transform: captionLines >= 1 ? "translateY(0)" : "translateY(15px)",
+                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
                 }}
               >
-                No law. No scripture. No compass.<br />
-                For over five hundred years,<br />
+                No law. No scripture. No compass.
+              </p>
+              <p
+                className="text-xl md:text-3xl lg:text-4xl"
+                style={{
+                  color: "#F0D878",
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  opacity: captionLines >= 2 ? 1 : 0,
+                  transform: captionLines >= 2 ? "translateY(0)" : "translateY(15px)",
+                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+                }}
+              >
+                For over five hundred years,
+              </p>
+              <p
+                className="text-xl md:text-3xl lg:text-4xl"
+                style={{
+                  color: "#F0D878",
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  opacity: captionLines >= 3 ? 1 : 0,
+                  transform: captionLines >= 3 ? "translateY(0)" : "translateY(15px)",
+                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+                }}
+              >
                 Arabia lived in total darkness.
               </p>
             </div>
@@ -587,47 +632,26 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
           }
-          @keyframes hadithFadeIn {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .hadith-fade-in {
-            animation: hadithFadeIn 2s ease-out forwards;
-          }
-          @keyframes sandDissolve {
+          @keyframes captionDissolveOut {
             0% {
               opacity: 1;
-              transform: translateY(0) scale(1);
+              transform: translateY(0);
               filter: blur(0px);
-              letter-spacing: normal;
-            }
-            30% {
-              opacity: 0.8;
-              transform: translateY(-5px) scale(1.01);
-              filter: blur(0.5px);
-              letter-spacing: 0.1em;
-            }
-            60% {
-              opacity: 0.4;
-              transform: translateY(-15px) scale(1.03);
-              filter: blur(2px);
-              letter-spacing: 0.3em;
             }
             100% {
               opacity: 0;
-              transform: translateY(-40px) scale(1.08);
-              filter: blur(6px);
-              letter-spacing: 0.8em;
+              transform: translateY(-30px);
+              filter: blur(4px);
             }
           }
-          .sand-dissolve {
-            animation: sandDissolve 2s ease-in forwards;
+          .caption-dissolve p:nth-child(1) {
+            animation: captionDissolveOut 1.2s ease-in forwards;
           }
-          .sand-dissolve p {
-            animation: sandDissolve 2s ease-in forwards;
+          .caption-dissolve p:nth-child(2) {
+            animation: captionDissolveOut 1.2s ease-in 0.15s forwards;
           }
-          .sand-dissolve p:last-child {
-            animation-delay: 0.3s;
+          .caption-dissolve p:nth-child(3) {
+            animation: captionDissolveOut 1.2s ease-in 0.3s forwards;
           }
         `}</style>
       </div>
