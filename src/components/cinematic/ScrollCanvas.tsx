@@ -411,9 +411,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             style={{ zIndex: 8, opacity: introOpacity }}
           >
             {introPhase === "ummah" && (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-4">
                 <p
-                  className="text-sm md:text-base tracking-[0.4em] uppercase"
+                  className="text-base md:text-lg tracking-[0.4em] uppercase"
                   style={{
                     color: "#ffffff",
                     fontFamily: "'Montserrat', 'Arial', sans-serif",
@@ -427,9 +427,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 <img
                   src="/ummah-media-logo.png"
                   alt="Ummah Media Corporation"
-                  className="h-24 md:h-32"
+                  className="h-36 md:h-48"
                   style={{
-                    filter: "brightness(0) invert(1) drop-shadow(0 2px 20px rgba(0,0,0,0.8))",
+                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
                   }}
                 />
               </div>
@@ -440,9 +440,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 <img
                   src="/salik-foundation-full-logo.png"
                   alt="Salik Foundation"
-                  className="h-28 md:h-40"
+                  className="h-40 md:h-56"
                   style={{
-                    filter: "brightness(0) invert(1) drop-shadow(0 2px 20px rgba(0,0,0,0.8))",
+                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
                   }}
                 />
               </div>
