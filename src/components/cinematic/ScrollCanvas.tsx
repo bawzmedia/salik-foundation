@@ -292,18 +292,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               // Drive section 1 quote during playback (frame-driven)
               if (sectionIndex === 1) {
                 const rel = frameIdx - 241; // relative to section start (0-indexed)
-                if (rel < 15) {
-                  // First 15 frames — fade in
-                  setSectionQuote(1);
-                  sectionQuoteRef.current = 1;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(rel / 15);
-                } else {
-                  setSectionQuote(1);
-                  sectionQuoteRef.current = 1;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(1);
-                }
+                // Appear immediately — fade in over first 8 frames
+                setSectionQuote(1);
+                sectionQuoteRef.current = 1;
+                setQuoteDissolving(false);
+                setBaalFadeProgress(Math.min(1, rel / 8));
               } else if (sectionQuoteRef.current !== null && sectionIndex !== 1) {
                 // Clear quotes when playing other sections
                 setSectionQuote(null);
