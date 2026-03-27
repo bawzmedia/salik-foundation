@@ -408,7 +408,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         {introPhase !== "none" && introPhase !== "done" && (
           <div
             className="fixed inset-0 flex items-start justify-center pointer-events-none"
-            style={{ zIndex: 8, opacity: introOpacity, paddingTop: "15vh" }}
+            style={{ zIndex: 8, opacity: introOpacity, paddingTop: "8vh" }}
           >
             {introPhase === "ummah" && (
               <div className="flex flex-col items-center gap-4">
