@@ -27,9 +27,10 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [hadithDissolving, setHadithDissolving] = useState(false);
     const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
     const showHadithRef = useRef(false);
-    const [sectionQuote, setSectionQuote] = useState<number | null>(null); // which section's quote to show
+    const [sectionQuote, setSectionQuote] = useState<number | null>(null);
     const [quoteDissolving, setQuoteDissolving] = useState(false);
     const sectionQuoteRef = useRef<number | null>(null);
+    const [baalFadeProgress, setBaalFadeProgress] = useState(0);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -288,8 +289,23 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
               }
 
-              // Clear section quotes during playback
-              if (sectionQuoteRef.current !== null) {
+              // Drive section 1 quote during playback (frame-driven)
+              if (sectionIndex === 1) {
+                const rel = frameIdx - 241; // relative to section start (0-indexed)
+                if (rel < 15) {
+                  // First 15 frames — fade in
+                  setSectionQuote(1);
+                  sectionQuoteRef.current = 1;
+                  setQuoteDissolving(false);
+                  setBaalFadeProgress(rel / 15);
+                } else {
+                  setSectionQuote(1);
+                  sectionQuoteRef.current = 1;
+                  setQuoteDissolving(false);
+                  setBaalFadeProgress(1);
+                }
+              } else if (sectionQuoteRef.current !== null && sectionIndex !== 1) {
+                // Clear quotes when playing other sections
                 setSectionQuote(null);
                 sectionQuoteRef.current = null;
                 setQuoteDissolving(false);
@@ -615,45 +631,55 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           </div>
         )}
 
-        {/* Section quotes — fade in on pause, dissolve on scroll */}
+        {/* Section quotes — positioned per scene */}
         {sectionQuote !== null && (
           <div
-            className={`fixed inset-0 flex items-center justify-center pointer-events-none ${quoteDissolving ? "caption-dissolve" : "quote-fade-in"}`}
+            className={`fixed inset-0 pointer-events-none ${quoteDissolving ? "caption-dissolve" : ""}`}
             style={{ zIndex: 9 }}
           >
-            <div className="text-center px-8 max-w-3xl">
-              {sectionQuote === 1 && (
-                <>
-                  <p
-                    className="text-lg md:text-2xl lg:text-3xl leading-relaxed mb-4"
-                    style={{
-                      color: "#F0D878",
-                      fontFamily: "Georgia, 'Times New Roman', serif",
-                      fontStyle: "italic",
-                      fontWeight: 400,
-                      textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    &ldquo;Do you call upon Baal and abandon<br />
-                    the Best of Creators &mdash;<br />
-                    Allah, your Lord and the Lord<br />
-                    of your forefathers?&rdquo;
-                  </p>
-                  <p
-                    className="text-xs md:text-sm tracking-[0.3em] uppercase"
-                    style={{
-                      color: "rgba(240,216,120,0.6)",
-                      fontFamily: "'Montserrat', 'Arial', sans-serif",
-                      fontWeight: 300,
-                      textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                    }}
-                  >
-                    Qur&rsquo;an 37:125-126
-                  </p>
-                </>
-              )}
-            </div>
+            {sectionQuote === 1 && (
+              <div
+                className="absolute left-0 top-0 px-8 md:px-16"
+                style={{
+                  paddingTop: "12vh",
+                  maxWidth: "600px",
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 15}px)`,
+                }}
+              >
+                <p
+                  className="text-xl md:text-3xl lg:text-4xl leading-snug mb-3"
+                  style={{
+                    color: "#F0D878",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    textAlign: "left",
+                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  &ldquo;Do you call upon<br />
+                  Baal and abandon<br />
+                  the Best of Creators &mdash;<br />
+                  Allah, your Lord and<br />
+                  the Lord of your<br />
+                  forefathers?&rdquo;
+                </p>
+                <p
+                  className="text-xs md:text-sm tracking-[0.2em] uppercase"
+                  style={{
+                    color: "rgba(240,216,120,0.5)",
+                    fontFamily: "'Montserrat', 'Arial', sans-serif",
+                    fontWeight: 300,
+                    textAlign: "left",
+                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
+                  }}
+                >
+                  Qur&rsquo;an 37:125-126
+                </p>
+              </div>
+            )}
           </div>
         )}
 
