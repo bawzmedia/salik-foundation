@@ -20,7 +20,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const currentSectionRef = useRef(0);
     const [currentSection, setCurrentSection] = useState(0);
     const [showScrollHint, setShowScrollHint] = useState(false);
-    const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "text" | "done">("none");
+    const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "done">("none");
     const [introOpacity, setIntroOpacity] = useState(0);
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
@@ -198,15 +198,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 } else if (f < 145) {
                   setIntroPhase("salik");
                   setIntroOpacity(1 - (f - 130) / 15); // fade out
-                } else if (f < 155) {
-                  setIntroPhase("text");
-                  setIntroOpacity((f - 145) / 10); // fade in
-                } else if (f < 195) {
-                  setIntroPhase("text");
-                  setIntroOpacity(1); // hold
-                } else if (f < 210) {
-                  setIntroPhase("text");
-                  setIntroOpacity(1 - (f - 195) / 15); // fade out
                 } else {
                   setIntroPhase("done");
                   setIntroOpacity(0);
@@ -476,25 +467,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               </div>
             )}
 
-            {introPhase === "text" && (
-              <div className="text-center px-8 max-w-3xl">
-                <p
-                  className="text-xl md:text-3xl leading-relaxed"
-                  style={{
-                    color: "#ffffff",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontWeight: 400,
-                    fontStyle: "italic",
-                    textShadow: "0 2px 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.5)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  They buried their daughters.<br />
-                  They bowed to stones.<br />
-                  They knew nothing of mercy.
-                </p>
-              </div>
-            )}
           </div>
         )}
 
