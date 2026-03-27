@@ -20,6 +20,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const currentSectionRef = useRef(0);
     const [currentSection, setCurrentSection] = useState(0);
     const [showScrollHint, setShowScrollHint] = useState(false);
+    const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "text" | "done">("none");
+    const [introOpacity, setIntroOpacity] = useState(0);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -139,6 +141,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 : section.endFrame / TOTAL_FRAMES;
               onProgressChange?.(progress);
 
+              // Clear intro after first section
+              if (sectionIndex === 0) {
+                setIntroPhase("done");
+                setIntroOpacity(0);
+              }
+
               // Show scroll hint unless we're on the last section
               if (sectionIndex < SECTIONS.length - 1) {
                 setShowScrollHint(true);
@@ -153,6 +161,39 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               lastTime = now - (elapsed % FPS_INTERVAL);
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
+
+              // Drive intro overlays during section 0 (clip 1+2)
+              if (sectionIndex === 0 && !reverse) {
+                const f = frameIdx; // 0-indexed frame
+                if (f < 10) {
+                  setIntroPhase("ummah");
+                  setIntroOpacity(f / 10); // fade in
+                } else if (f < 50) {
+                  setIntroPhase("ummah");
+                  setIntroOpacity(1); // hold
+                } else if (f < 65) {
+                  setIntroPhase("ummah");
+                  setIntroOpacity(1 - (f - 50) / 15); // fade out
+                } else if (f < 75) {
+                  setIntroPhase("salik");
+                  setIntroOpacity((f - 65) / 10); // fade in
+                } else if (f < 130) {
+                  setIntroPhase("salik");
+                  setIntroOpacity(1); // hold
+                } else if (f < 145) {
+                  setIntroPhase("salik");
+                  setIntroOpacity(1 - (f - 130) / 15); // fade out
+                } else if (f < 155) {
+                  setIntroPhase("text");
+                  setIntroOpacity((f - 145) / 10); // fade in
+                } else if (f < 220) {
+                  setIntroPhase("text");
+                  setIntroOpacity(1); // hold
+                } else {
+                  setIntroPhase("text");
+                  setIntroOpacity(1 - (f - 220) / 20); // fade out
+                }
+              }
 
               const progress = frameIdx / TOTAL_FRAMES;
               onProgressChange?.(progress);
@@ -362,6 +403,72 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           className="fixed left-0 top-0 w-screen h-screen"
           style={{ zIndex: 2 }}
         />
+
+        {/* Cinematic intro overlays */}
+        {introPhase !== "none" && introPhase !== "done" && (
+          <div
+            className="fixed inset-0 flex items-center justify-center pointer-events-none"
+            style={{ zIndex: 8, opacity: introOpacity }}
+          >
+            {introPhase === "ummah" && (
+              <div className="flex flex-col items-center gap-3">
+                <p
+                  className="text-sm md:text-base tracking-[0.4em] uppercase"
+                  style={{
+                    color: "#ffffff",
+                    fontFamily: "'Montserrat', 'Arial', sans-serif",
+                    fontWeight: 300,
+                    textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
+                    letterSpacing: "0.4em",
+                  }}
+                >
+                  Produced by
+                </p>
+                <img
+                  src="/ummah-media-logo.png"
+                  alt="Ummah Media Corporation"
+                  className="h-24 md:h-32"
+                  style={{
+                    filter: "brightness(0) invert(1) drop-shadow(0 2px 20px rgba(0,0,0,0.8))",
+                  }}
+                />
+              </div>
+            )}
+
+            {introPhase === "salik" && (
+              <div className="flex flex-col items-center">
+                <img
+                  src="/salik-foundation-full-logo.png"
+                  alt="Salik Foundation"
+                  className="h-28 md:h-40"
+                  style={{
+                    filter: "brightness(0) invert(1) drop-shadow(0 2px 20px rgba(0,0,0,0.8))",
+                  }}
+                />
+              </div>
+            )}
+
+            {introPhase === "text" && (
+              <div className="text-center px-8 max-w-3xl">
+                <p
+                  className="text-xl md:text-3xl leading-relaxed"
+                  style={{
+                    color: "#ffffff",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontWeight: 400,
+                    fontStyle: "italic",
+                    textShadow: "0 2px 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.5)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  They buried their daughters.<br />
+                  They bowed to stones.<br />
+                  They knew nothing of mercy.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Cutscene scroll prompt */}
         <div
