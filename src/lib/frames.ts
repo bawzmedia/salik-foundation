@@ -9,7 +9,7 @@ export interface Section {
   textOverlay: string | null;
 }
 
-export const TOTAL_FRAMES = 664;
+export const TOTAL_FRAMES = 785;
 export const INITIAL_BATCH_SIZE = 30;
 export const BATCH_SIZE = 30;
 export const LOOK_AHEAD = 60;
@@ -56,6 +56,16 @@ export const SECTIONS: Section[] = [
     name: "The Transformation of Arabia",
     startFrame: 544,
     endFrame: 664,
+    frameCount: 121,
+    textOverlay: null,
+  },
+
+  // ── Clip 6: The Message Reaches the World ──
+  {
+    id: 5,
+    name: "The Message Reaches the World",
+    startFrame: 665,
+    endFrame: 785,
     frameCount: 121,
     textOverlay: null,
   },
