@@ -157,7 +157,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           const endFrame = section.endFrame - 1; // 0-indexed
 
           let frameIdx = reverse ? endFrame : startFrame;
-          const FPS_INTERVAL = 1000 / 24;
+          const FPS_INTERVAL = 1000 / 48;
           let lastTime = performance.now();
 
           // Preload frames for this section
@@ -482,7 +482,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           }
 
           let frame = 0;
-          const FPS_INTERVAL = 1000 / 24;
+          const FPS_INTERVAL = 1000 / 48;
           let lastTime = performance.now();
 
           const playNext = (now: number) => {
