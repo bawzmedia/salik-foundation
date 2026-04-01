@@ -612,57 +612,63 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           </div>
         )}
 
-        {/* Caption lines — fade in one at a time over shrine footage */}
+        {/* Section 0 — "500 YEARS OF DARKNESS" headline + subtitle */}
         {showHadith && (
           <div
             className={`fixed inset-0 flex items-center justify-center pointer-events-none ${hadithDissolving ? "caption-dissolve" : ""}`}
             style={{ zIndex: 9 }}
           >
-            <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-4">
-              <p
-                className="text-xl md:text-3xl lg:text-4xl"
+            <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-2">
+              <h2
                 style={{
-                  color: "#F0D878",
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  fontStyle: "italic",
+                  color: "#FFFFFF",
+                  fontFamily: "'Bebas Neue', sans-serif",
                   fontWeight: 400,
-                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  fontSize: "clamp(3rem, 10vw, 8rem)",
+                  lineHeight: 0.95,
+                  letterSpacing: "0.04em",
+                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
                   opacity: captionLines >= 1 ? 1 : 0,
-                  transform: captionLines >= 1 ? "translateY(0)" : "translateY(15px)",
-                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+                  transform: captionLines >= 1 ? "translateY(0)" : "translateY(20px)",
+                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+                  margin: 0,
                 }}
               >
-                No law. No scripture. No compass.
-              </p>
-              <p
-                className="text-xl md:text-3xl lg:text-4xl"
+                500 Years
+              </h2>
+              <h2
                 style={{
-                  color: "#F0D878",
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  fontStyle: "italic",
+                  color: "#FFFFFF",
+                  fontFamily: "'Bebas Neue', sans-serif",
                   fontWeight: 400,
-                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                  fontSize: "clamp(3rem, 10vw, 8rem)",
+                  lineHeight: 0.95,
+                  letterSpacing: "0.04em",
+                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
                   opacity: captionLines >= 2 ? 1 : 0,
-                  transform: captionLines >= 2 ? "translateY(0)" : "translateY(15px)",
-                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+                  transform: captionLines >= 2 ? "translateY(0)" : "translateY(20px)",
+                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+                  margin: 0,
                 }}
               >
-                For over five hundred years,
-              </p>
+                Of Darkness
+              </h2>
               <p
-                className="text-xl md:text-3xl lg:text-4xl"
+                className="mt-4"
                 style={{
                   color: "#F0D878",
                   fontFamily: "Georgia, 'Times New Roman', serif",
                   fontStyle: "italic",
                   fontWeight: 400,
+                  fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
                   textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
                   opacity: captionLines >= 3 ? 1 : 0,
                   transform: captionLines >= 3 ? "translateY(0)" : "translateY(15px)",
                   transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+                  letterSpacing: "0.15em",
                 }}
               >
-                Arabia lived in total darkness.
+                No law. No scripture. No guidance.
               </p>
             </div>
           </div>
@@ -674,40 +680,53 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             className={`fixed inset-0 pointer-events-none ${quoteDissolving ? "caption-dissolve" : ""}`}
             style={{ zIndex: 9 }}
           >
+            {/* Section 1 — THEY BOWED TO STONE */}
             {sectionQuote === 1 && (
               <div
                 className="absolute top-0"
                 style={{
                   left: "25vw",
-                  paddingTop: "11vh",
-                  maxWidth: "600px",
+                  paddingTop: "8vh",
+                  maxWidth: "650px",
                   opacity: quoteDissolving ? undefined : baalFadeProgress,
                   transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 15}px)`,
                 }}
               >
+                <h2
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
+                    lineHeight: 0.95,
+                    letterSpacing: "0.04em",
+                    textAlign: "left",
+                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                    margin: 0,
+                  }}
+                >
+                  They Bowed<br />To Stone
+                </h2>
                 <p
-                  className="text-xl md:text-3xl lg:text-4xl leading-snug mb-3"
+                  className="mt-4"
                   style={{
                     color: "#F0D878",
                     fontFamily: "Georgia, 'Times New Roman', serif",
                     fontStyle: "italic",
                     fontWeight: 400,
+                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
                     textAlign: "left",
                     textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    lineHeight: 1.4,
+                    lineHeight: 1.5,
                   }}
                 >
-                  &ldquo;Do you call upon<br />
-                  Baal and abandon<br />
-                  the Best of Creators &mdash;<br />
-                  Allah, your Lord and<br />
-                  the Lord of your<br />
-                  forefathers?&rdquo;
+                  &ldquo;Do you call upon Baal and abandon the Best of Creators &mdash;<br />
+                  Allah, your Lord and the Lord of your forefathers?&rdquo;
                 </p>
                 <p
-                  className="text-xs md:text-sm tracking-[0.2em] uppercase"
+                  className="mt-2 text-xs md:text-sm tracking-[0.2em] uppercase"
                   style={{
-                    color: "rgba(240,216,120,0.5)",
+                    color: "rgba(240,216,120,0.4)",
                     fontFamily: "'Montserrat', 'Arial', sans-serif",
                     fontWeight: 300,
                     textAlign: "left",
@@ -719,57 +738,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               </div>
             )}
 
-            {sectionQuote === 3 && (
-              <div
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
-                }}
-              >
-                <p
-                  className="text-3xl md:text-5xl lg:text-6xl leading-tight text-center px-8 max-w-4xl"
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  And the world<br />was never the same.
-                </p>
-              </div>
-            )}
-
-            {sectionQuote === 4 && (
-              <div
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
-                }}
-              >
-                <p
-                  className="text-2xl md:text-4xl lg:text-5xl leading-relaxed text-center px-8 max-w-4xl"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  The message crossed every ocean.<br />
-                  Every mountain. Every border.
-                </p>
-              </div>
-            )}
-
+            {/* Section 2 — ALLAH'S MERCY SENT LIGHT */}
             {sectionQuote === 2 && (
               <div
                 className="flex flex-col items-center pt-[2vh]"
@@ -781,36 +750,142 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 <img
                   src="/quran-open.webp"
                   alt="The Holy Qur'an"
-                  className="h-56 md:h-72 lg:h-96 mb-6"
+                  className="h-48 md:h-64 lg:h-80 mb-6"
                   style={{
                     filter: "drop-shadow(0 0 40px rgba(200,168,78,0.4)) drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
                   }}
                 />
+                <h2
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "clamp(2.5rem, 8vw, 6rem)",
+                    lineHeight: 0.95,
+                    letterSpacing: "0.04em",
+                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                    margin: 0,
+                    textAlign: "center",
+                  }}
+                >
+                  Allah&rsquo;s Mercy<br />Sent Light
+                </h2>
                 <p
-                  className="text-lg md:text-2xl lg:text-3xl leading-relaxed text-center px-8 max-w-3xl mb-3"
+                  className="mt-4"
                   style={{
                     color: "#F0D878",
                     fontFamily: "Georgia, 'Times New Roman', serif",
                     fontStyle: "italic",
                     fontWeight: 400,
+                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
                     textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
                     lineHeight: 1.7,
+                    textAlign: "center",
+                    maxWidth: "600px",
+                    padding: "0 2rem",
                   }}
                 >
-                  &ldquo;A Book We have sent down to you<br />
-                  so that you may bring mankind<br />
+                  &ldquo;A Book sent down to bring mankind<br />
                   out of darkness and into light.&rdquo;
                 </p>
                 <p
-                  className="text-xs md:text-sm tracking-[0.3em] uppercase"
+                  className="mt-2 text-xs md:text-sm tracking-[0.3em] uppercase"
                   style={{
-                    color: "rgba(240,216,120,0.5)",
+                    color: "rgba(240,216,120,0.4)",
                     fontFamily: "'Montserrat', 'Arial', sans-serif",
                     fontWeight: 300,
                     textShadow: "0 2px 20px rgba(0,0,0,0.9)",
                   }}
                 >
                   Qur&rsquo;an 14:1
+                </p>
+              </div>
+            )}
+
+            {/* Section 3 — EVERYTHING CHANGED */}
+            {sectionQuote === 3 && (
+              <div
+                className="flex flex-col items-center justify-center"
+                style={{
+                  height: "100vh",
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                }}
+              >
+                <h2
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "clamp(3.5rem, 12vw, 9rem)",
+                    lineHeight: 0.95,
+                    letterSpacing: "0.04em",
+                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                    margin: 0,
+                    textAlign: "center",
+                  }}
+                >
+                  Everything<br />Changed
+                </h2>
+                <p
+                  className="mt-4"
+                  style={{
+                    color: "#F0D878",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
+                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                    textAlign: "center",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  One revelation. One message. One God.
+                </p>
+              </div>
+            )}
+
+            {/* Section 4 — THE WORLD LISTENED */}
+            {sectionQuote === 4 && (
+              <div
+                className="flex flex-col items-center justify-center"
+                style={{
+                  height: "100vh",
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                }}
+              >
+                <h2
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "clamp(3rem, 10vw, 8rem)",
+                    lineHeight: 0.95,
+                    letterSpacing: "0.04em",
+                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                    margin: 0,
+                    textAlign: "center",
+                  }}
+                >
+                  The World<br />Listened
+                </h2>
+                <p
+                  className="mt-4"
+                  style={{
+                    color: "#F0D878",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
+                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
+                    textAlign: "center",
+                    letterSpacing: "0.08em",
+                    maxWidth: "600px",
+                    padding: "0 2rem",
+                  }}
+                >
+                  The message crossed every ocean, every mountain, every border.
                 </p>
               </div>
             )}
