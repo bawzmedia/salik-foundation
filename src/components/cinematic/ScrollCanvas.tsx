@@ -306,7 +306,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               } else if (sectionIndex === 2) {
                 // Section 2: clip 4 — "The Qur'an Descends" (0-indexed: 392-542)
                 const rel = frameIdx - 392;
-                // 151 frames total, appear ~15 frames from end (rel 136+)
                 if (rel < 136) {
                   setSectionQuote(null);
                   sectionQuoteRef.current = null;
@@ -315,6 +314,32 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   sectionQuoteRef.current = 2;
                   setQuoteDissolving(false);
                   setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                }
+              } else if (sectionIndex === 3) {
+                // Section 3: clip 5 — "Transformation of Arabia" (0-indexed: 543-663)
+                const rel = frameIdx - 543;
+                // 121 frames total, appear ~20 frames from end
+                if (rel < 101) {
+                  setSectionQuote(null);
+                  sectionQuoteRef.current = null;
+                } else {
+                  setSectionQuote(3);
+                  sectionQuoteRef.current = 3;
+                  setQuoteDissolving(false);
+                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                }
+              } else if (sectionIndex === 4) {
+                // Section 4: clip 6 — "The Message Reaches the World" (0-indexed: 664-784)
+                const rel = frameIdx - 664;
+                // 121 frames total, appear ~20 frames from end
+                if (rel < 101) {
+                  setSectionQuote(null);
+                  sectionQuoteRef.current = null;
+                } else {
+                  setSectionQuote(4);
+                  sectionQuoteRef.current = 4;
+                  setQuoteDissolving(false);
+                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
                 }
               } else if (sectionQuoteRef.current !== null) {
                 // Clear quotes when playing other sections
@@ -690,6 +715,57 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                   }}
                 >
                   Qur&rsquo;an 37:125-126
+                </p>
+              </div>
+            )}
+
+            {sectionQuote === 3 && (
+              <div
+                className="flex flex-col items-center justify-center"
+                style={{
+                  height: "100vh",
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                }}
+              >
+                <p
+                  className="text-3xl md:text-5xl lg:text-6xl leading-tight text-center px-8 max-w-4xl"
+                  style={{
+                    color: "#FFFFFF",
+                    fontFamily: "'Montserrat', 'Arial', sans-serif",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                  }}
+                >
+                  And the world<br />was never the same.
+                </p>
+              </div>
+            )}
+
+            {sectionQuote === 4 && (
+              <div
+                className="flex flex-col items-center justify-center"
+                style={{
+                  height: "100vh",
+                  opacity: quoteDissolving ? undefined : baalFadeProgress,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                }}
+              >
+                <p
+                  className="text-2xl md:text-4xl lg:text-5xl leading-relaxed text-center px-8 max-w-4xl"
+                  style={{
+                    color: "#F0D878",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  The message crossed every ocean.<br />
+                  Every mountain. Every border.
                 </p>
               </div>
             )}
