@@ -32,9 +32,85 @@ const { title, description = "Guided by compassion, justice, and service to huma
     <meta name="twitter:description" content={description} />
 
     <title>{title}</title>
+
+    <!-- Source protection CSS -->
+    <style>
+      * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+      img {
+        pointer-events: none;
+        -webkit-user-drag: none;
+      }
+    </style>
   </head>
-  <body class="antialiased">
+  <body class="antialiased" oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
     <slot />
+
+    <!-- Source protection -->
+    <script is:inline>
+      // Disable right-click context menu
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+      // Disable text selection
+      document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+
+      // Disable image/element dragging
+      document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+
+      // Block common dev tools shortcuts
+      document.addEventListener('keydown', function(e) {
+        // F12
+        if (e.key === 'F12') { e.preventDefault(); return; }
+        // Ctrl/Cmd + Shift + I (Inspect)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') { e.preventDefault(); return; }
+        // Ctrl/Cmd + Shift + J (Console)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') { e.preventDefault(); return; }
+        // Ctrl/Cmd + Shift + C (Element picker)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') { e.preventDefault(); return; }
+        // Ctrl/Cmd + U (View Source)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); return; }
+        // Ctrl/Cmd + S (Save page)
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); return; }
+        // Ctrl/Cmd + A (Select All)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); return; }
+        // Ctrl/Cmd + C (Copy) — on body only
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); return; }
+        // Ctrl/Cmd + P (Print)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); return; }
+      });
+
+      // Disable copy
+      document.addEventListener('copy', function(e) { e.preventDefault(); });
+
+      // Dev tools detection via debugger timing
+      (function() {
+        var threshold = 160;
+        setInterval(function() {
+          var start = performance.now();
+          debugger;
+          var end = performance.now();
+          if (end - start > threshold) {
+            document.body.innerHTML = '';
+          }
+        }, 1000);
+      })();
+
+      // Disable print screen / screenshots (CSS approach)
+      var style = document.createElement('style');
+      style.textContent = '@media print { body { display: none !important; } }';
+      document.head.appendChild(style);
+
+      // Clear console
+      console.clear();
+      console.log('%cStop!', 'color: red; font-size: 50px; font-weight: bold;');
+      console.log('%cThis is a protected website. Unauthorized copying is prohibited.', 'font-size: 16px;');
+    </script>
+
     <noscript>
       <div style="padding: 2rem; color: white; background-color: black;">
         <h1>Salik Foundation</h1>
