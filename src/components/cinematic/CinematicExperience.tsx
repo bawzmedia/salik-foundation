@@ -30,42 +30,48 @@ export default function CinematicExperience() {
       <SectionOverlay progress={progress} />
       <ScrollProgress progress={progress} />
 
-      {/* Floating nav links — no bar, just text on screen */}
-      <div className="pointer-events-none fixed left-0 right-0 top-0 z-30 flex items-center justify-between px-6 py-4">
-        <a href="/" className="pointer-events-auto">
+      {/* Floating nav — Bebas Neue, evenly spaced across top */}
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-30 flex items-center px-6 md:px-12 py-5">
+        <a href="/" className="pointer-events-auto shrink-0">
           <img
             src="/salik-foundation-logo.png"
             alt="Salik Foundation"
             className="h-8 md:h-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
           />
         </a>
-        <div className="pointer-events-auto hidden items-center gap-6 text-sm tracking-[0.2em] uppercase md:flex" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+        <div className="pointer-events-auto hidden flex-1 items-center justify-evenly md:flex" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
           <a
             href="/about"
-            className="transition-colors hover:text-white"
+            className="transition-all hover:text-white hover:scale-105"
             style={{
               color: "#C8A84E",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              fontSize: "1.4rem",
+              letterSpacing: "0.12em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6)",
             }}
           >
             About
           </a>
           <a
             href="/programs"
-            className="transition-colors hover:text-white"
+            className="transition-all hover:text-white hover:scale-105"
             style={{
               color: "#C8A84E",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              fontSize: "1.4rem",
+              letterSpacing: "0.12em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6)",
             }}
           >
             Programs
           </a>
           <a
             href="/contact"
-            className="transition-colors hover:text-white"
+            className="transition-all hover:text-white hover:scale-105"
             style={{
               color: "#C8A84E",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              fontSize: "1.4rem",
+              letterSpacing: "0.12em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6)",
             }}
           >
             Contact
@@ -74,10 +80,12 @@ export default function CinematicExperience() {
             href="https://www.canadahelps.org/en/charities/salik-foundation/"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-sm border border-[#C8A84E]/50 bg-black/20 px-5 py-2 backdrop-blur-sm transition-all hover:bg-[#C8A84E]/20 hover:border-[#C8A84E]"
+            className="rounded-sm border border-[#C8A84E]/50 bg-black/20 px-6 py-2 backdrop-blur-sm transition-all hover:bg-[#C8A84E]/20 hover:border-[#C8A84E] hover:scale-105"
             style={{
               color: "#C8A84E",
-              textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5)",
+              fontSize: "1.4rem",
+              letterSpacing: "0.12em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6)",
             }}
           >
             Donate

@@ -3,17 +3,20 @@ const { transparent = false } = Astro.props;
 ---
 
 <nav class={`w-full ${transparent ? 'bg-transparent' : 'bg-black/90 backdrop-blur-sm border-b border-white/10'}`}>
-  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a href="/">
+  <div class="mx-auto flex items-center px-6 md:px-12 py-5">
+    <a href="/" class="shrink-0">
       <img src="/salik-foundation-logo.png" alt="Salik Foundation" class="h-8 md:h-10" />
     </a>
-    <div class="hidden items-center gap-6 text-sm tracking-wide text-white/70 md:flex">
-      <a href="/about" class="transition-colors hover:text-white">About</a>
-      <a href="/programs" class="transition-colors hover:text-white">Programs</a>
-      <a href="/contact" class="transition-colors hover:text-white">Contact</a>
+    <div class="hidden flex-1 items-center justify-evenly md:flex" style="font-family: 'Bebas Neue', sans-serif;">
+      <a href="/about" class="transition-all hover:text-white hover:scale-105" style="color: #C8A84E; font-size: 1.4rem; letter-spacing: 0.12em; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6);">About</a>
+      <a href="/programs" class="transition-all hover:text-white hover:scale-105" style="color: #C8A84E; font-size: 1.4rem; letter-spacing: 0.12em; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6);">Programs</a>
+      <a href="/contact" class="transition-all hover:text-white hover:scale-105" style="color: #C8A84E; font-size: 1.4rem; letter-spacing: 0.12em; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6);">Contact</a>
       <a
-        href="/donate"
-        class="rounded-sm border border-[#4AB3E2] bg-[#4AB3E2]/20 px-5 py-2 text-white shadow-[0_0_15px_rgba(74,179,226,0.2)] transition-all hover:bg-[#4AB3E2]/40 hover:shadow-[0_0_25px_rgba(74,179,226,0.4)]"
+        href="https://www.canadahelps.org/en/charities/salik-foundation/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="rounded-sm border border-[#C8A84E]/50 bg-black/20 px-6 py-2 backdrop-blur-sm transition-all hover:bg-[#C8A84E]/20 hover:border-[#C8A84E] hover:scale-105"
+        style="color: #C8A84E; font-size: 1.4rem; letter-spacing: 0.12em; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.6);"
       >
         Donate
       </a>
@@ -32,11 +35,11 @@ const { transparent = false } = Astro.props;
 
 <!-- Mobile menu -->
 <div id="page-mobile-menu" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md md:hidden">
-  <div class="flex h-full flex-col items-center justify-center gap-8">
-    <a href="/about" class="text-2xl tracking-wide text-white/80 hover:text-white">About</a>
-    <a href="/programs" class="text-2xl tracking-wide text-white/80 hover:text-white">Programs</a>
-    <a href="/contact" class="text-2xl tracking-wide text-white/80 hover:text-white">Contact</a>
-    <a href="/donate" class="mt-4 rounded-sm border border-[#4AB3E2] bg-[#4AB3E2]/20 px-10 py-4 text-xl tracking-[0.2em] uppercase text-white">
+  <div class="flex h-full flex-col items-center justify-center gap-10">
+    <a href="/about" class="hover:text-white transition-all" style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #C8A84E; letter-spacing: 0.12em;">About</a>
+    <a href="/programs" class="hover:text-white transition-all" style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #C8A84E; letter-spacing: 0.12em;">Programs</a>
+    <a href="/contact" class="hover:text-white transition-all" style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #C8A84E; letter-spacing: 0.12em;">Contact</a>
+    <a href="https://www.canadahelps.org/en/charities/salik-foundation/" target="_blank" rel="noopener noreferrer" class="mt-4 rounded-sm border border-[#C8A84E]/50 bg-black/20 px-10 py-4 transition-all hover:bg-[#C8A84E]/20" style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #C8A84E; letter-spacing: 0.12em;">
       Donate
     </a>
     <button class="mt-8 text-white/50" id="page-menu-close">Close</button>
