@@ -28,12 +28,11 @@ function loadImageWithRetry(
 ): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.decoding = "async";
     img.onload = () => resolve(img);
     img.onerror = () => {
       if (retries > 0) {
         setTimeout(() => {
-          loadImageWithRetry(src, retries - 1, delay * 1.5).then(resolve).catch(reject);
+          loadImageWithRetry(src, retries - 1, delay).then(resolve).catch(reject);
         }, delay);
       } else {
         reject(new Error(`Failed to load: ${src}`));
@@ -47,11 +46,9 @@ export function useFrameLoader(): UseFrameLoaderReturn {
   const frames = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
   const flashFrames = useRef<(HTMLImageElement | null)[]>(new Array(FLASH_FRAME_COUNT).fill(null));
   const loadedBatches = useRef<Set<number>>(new Set());
-  const loadedCountRef = useRef(0);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
-  const progressThrottleRef = useRef(0);
 
   const tier = useRef<"desktop" | "mobile">("desktop");
 
@@ -69,12 +66,7 @@ export function useFrameLoader(): UseFrameLoaderReturn {
         loadImageWithRetry(getFramePath(i, tier.current))
           .then((img) => {
             frames.current[idx] = img;
-            loadedCountRef.current++;
-            // Only update React state every 15 frames to reduce re-renders
-            progressThrottleRef.current++;
-            if (progressThrottleRef.current % 15 === 0) {
-              setLoadingProgress(loadedCountRef.current / TOTAL_FRAMES);
-            }
+            setLoadedCount((prev) => prev + 1);
           })
           .catch(() => {})
       );
@@ -104,13 +96,11 @@ export function useFrameLoader(): UseFrameLoaderReturn {
       setIsFallback(true);
     }, FALLBACK_TIMEOUT_MS);
 
-    // Load first 2 batches in parallel for faster initial display
-    Promise.all([loadBatch(0), loadBatch(1)]).then(() => {
+    loadBatch(0).then(() => {
       setIsInitialLoadComplete(true);
       clearTimeout(fallbackTimer);
     });
 
-    // Load flash frames if any
     if (FLASH_FRAME_COUNT > 0) {
       for (let i = 1; i <= FLASH_FRAME_COUNT; i++) {
         loadImageWithRetry(getFlashFramePath(i))
@@ -127,7 +117,7 @@ export function useFrameLoader(): UseFrameLoaderReturn {
   return {
     frames,
     flashFrames,
-    loadingProgress,
+    loadingProgress: loadedCount / TOTAL_FRAMES,
     isInitialLoadComplete,
     isFallback,
     updateCurrentFrame,

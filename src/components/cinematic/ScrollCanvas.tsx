@@ -165,7 +165,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           const endFrame = section.endFrame - 1; // 0-indexed
 
           let frameIdx = reverse ? endFrame : startFrame;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / 24;
           let lastTime = performance.now();
 
           // Preload frames for this section
@@ -249,11 +249,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
 
-              // Throttle React state updates to every 4th frame (12fps instead of 48fps)
-              stateThrottleRef.current++;
-              const shouldUpdateState = stateThrottleRef.current % 4 === 0;
-
-              if (shouldUpdateState) {
+              {
                 // Drive intro overlays during section 0 (clip 1+2)
                 if (sectionIndex === 0) {
                   const f = frameIdx;
@@ -354,7 +350,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
 
                 onProgressChange?.(frameIdx / TOTAL_FRAMES);
-              } // end shouldUpdateState
+              }
 
               if (reverse) {
                 frameIdx--;
@@ -512,7 +508,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           }
 
           let frame = 0;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / 24;
           let lastTime = performance.now();
 
           const playNext = (now: number) => {

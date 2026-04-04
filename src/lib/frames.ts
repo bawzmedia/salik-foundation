@@ -10,12 +10,12 @@ export interface Section {
 }
 
 export const TOTAL_FRAMES = 785;
-export const INITIAL_BATCH_SIZE = 15;
-export const BATCH_SIZE = 15;
-export const LOOK_AHEAD = 30;
-export const MAX_RETRIES = 3;
-export const RETRY_DELAY_MS = 300;
-export const FALLBACK_TIMEOUT_MS = 5_000;
+export const INITIAL_BATCH_SIZE = 30;
+export const BATCH_SIZE = 30;
+export const LOOK_AHEAD = 60;
+export const MAX_RETRIES = 2;
+export const RETRY_DELAY_MS = 500;
+export const FALLBACK_TIMEOUT_MS = 10_000;
 export const FLASH_FRAME_COUNT = 0;
 
 export const SECTIONS: Section[] = [
