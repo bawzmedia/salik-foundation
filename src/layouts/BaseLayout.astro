@@ -87,20 +87,7 @@ const { title, description = "Guided by compassion, justice, and service to huma
       // Disable copy
       document.addEventListener('copy', function(e) { e.preventDefault(); });
 
-      // Dev tools detection via debugger timing
-      (function() {
-        var threshold = 160;
-        setInterval(function() {
-          var start = performance.now();
-          debugger;
-          var end = performance.now();
-          if (end - start > threshold) {
-            document.body.innerHTML = '';
-          }
-        }, 1000);
-      })();
-
-      // Disable print screen / screenshots (CSS approach)
+      // Disable print
       var style = document.createElement('style');
       style.textContent = '@media print { body { display: none !important; } }';
       document.head.appendChild(style);

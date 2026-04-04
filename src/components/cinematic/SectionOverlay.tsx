@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { SECTIONS, getSectionProgress } from "@/lib/frames";
 
 interface SectionOverlayProps {
   progress: number;
 }
 
-export default function SectionOverlay({ progress }: SectionOverlayProps) {
+export default memo(function SectionOverlay({ progress }: SectionOverlayProps) {
   return (
     <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center">
       {SECTIONS.map((section) => {
@@ -56,4 +57,4 @@ export default function SectionOverlay({ progress }: SectionOverlayProps) {
       })}
     </div>
   );
-}
+});

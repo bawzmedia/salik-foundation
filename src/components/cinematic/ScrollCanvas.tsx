@@ -14,6 +14,8 @@ interface ScrollCanvasProps {
 const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
   function ScrollCanvas({ onProgressChange, onFallback }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+    const dprRef = useRef(typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1);
     const currentFrameRef = useRef(0);
     const isFlashingRef = useRef(false);
     const isPlayingRef = useRef(false);
@@ -25,7 +27,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [introOpacity, setIntroOpacity] = useState(0);
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
-    const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
+    const [captionLines, setCaptionLines] = useState<number>(0);
     const showHadithRef = useRef(false);
     const [sectionQuote, setSectionQuote] = useState<number | null>(null);
     const [quoteDissolving, setQuoteDissolving] = useState(false);
@@ -33,6 +35,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [baalFadeProgress, setBaalFadeProgress] = useState(0);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
+    const stateThrottleRef = useRef(0); // throttle state updates to every 4th frame
 
     const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame } =
       useFrameLoader();
@@ -45,22 +48,24 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const drawFrame = useCallback((img: HTMLImageElement) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext("2d");
+      const ctx = ctxRef.current;
       if (!ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const displayW = canvas.width / dpr;
-      const displayH = canvas.height / dpr;
+      const dpr = dprRef.current;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const displayW = cw / dpr;
+      const displayH = ch / dpr;
       const imgW = img.naturalWidth;
       const imgH = img.naturalHeight;
 
       const scale = Math.max(displayW / imgW, displayH / imgH);
       const sw = displayW / scale;
       const sh = displayH / scale;
-      const sx = (imgW - sw) / 2;
-      const sy = (imgH - sh) / 2;
+      const sx = (imgW - sw) * 0.5;
+      const sy = (imgH - sh) * 0.5;
 
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
     }, []);
 
     // Draw frame at given index (hold last loaded if target isn't ready)
@@ -84,12 +89,15 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const resizeCanvas = useCallback(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
+      dprRef.current = window.devicePixelRatio || 1;
+      const dpr = dprRef.current;
       const w = Math.round(window.innerWidth * dpr);
       const h = Math.round(window.innerHeight * dpr);
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
+        // Re-acquire context after resize (canvas resize clears it)
+        ctxRef.current = canvas.getContext("2d", { alpha: false });
       }
       const idx = currentFrameRef.current;
       let frameImg = frames.current[idx];
@@ -241,115 +249,112 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
 
-              // Drive intro overlays during section 0 (clip 1+2)
-              // Works identically forward and reverse — frame position determines state
-              if (sectionIndex === 0) {
-                const f = frameIdx; // 0-indexed frame
+              // Throttle React state updates to every 4th frame (12fps instead of 48fps)
+              stateThrottleRef.current++;
+              const shouldUpdateState = stateThrottleRef.current % 4 === 0;
 
-                // Logos
-                if (f < 10) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(f / 10);
-                } else if (f < 50) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1);
-                } else if (f < 65) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1 - (f - 50) / 15);
-                } else if (f < 75) {
-                  setIntroPhase("salik");
-                  setIntroOpacity((f - 65) / 10);
-                } else if (f < 130) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1);
-                } else if (f < 145) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1 - (f - 130) / 15);
-                } else {
-                  setIntroPhase("done");
-                  setIntroOpacity(0);
+              if (shouldUpdateState) {
+                // Drive intro overlays during section 0 (clip 1+2)
+                if (sectionIndex === 0) {
+                  const f = frameIdx;
+
+                  // Logos
+                  if (f < 10) {
+                    setIntroPhase("ummah");
+                    setIntroOpacity(f / 10);
+                  } else if (f < 50) {
+                    setIntroPhase("ummah");
+                    setIntroOpacity(1);
+                  } else if (f < 65) {
+                    setIntroPhase("ummah");
+                    setIntroOpacity(1 - (f - 50) / 15);
+                  } else if (f < 75) {
+                    setIntroPhase("salik");
+                    setIntroOpacity((f - 65) / 10);
+                  } else if (f < 130) {
+                    setIntroPhase("salik");
+                    setIntroOpacity(1);
+                  } else if (f < 145) {
+                    setIntroPhase("salik");
+                    setIntroOpacity(1 - (f - 130) / 15);
+                  } else {
+                    setIntroPhase("done");
+                    setIntroOpacity(0);
+                  }
+
+                  // Caption lines
+                  if (f < 165) {
+                    setCaptionLines(0);
+                    setShowHadith(false); showHadithRef.current = false;
+                  } else if (f < 190) {
+                    setCaptionLines(1);
+                    setShowHadith(true); showHadithRef.current = true;
+                    setHadithDissolving(false);
+                  } else if (f < 215) {
+                    setCaptionLines(2);
+                    setShowHadith(true); showHadithRef.current = true;
+                    setHadithDissolving(false);
+                  } else {
+                    setCaptionLines(3);
+                    setShowHadith(true); showHadithRef.current = true;
+                    setHadithDissolving(false);
+                  }
                 }
 
-                // Caption lines — frame position determines how many are visible
-                if (f < 165) {
-                  setCaptionLines(0);
-                  setShowHadith(false); showHadithRef.current = false;
-                } else if (f < 190) {
-                  setCaptionLines(1);
-                  setShowHadith(true); showHadithRef.current = true;
-                  setHadithDissolving(false);
-                } else if (f < 215) {
-                  setCaptionLines(2);
-                  setShowHadith(true); showHadithRef.current = true;
-                  setHadithDissolving(false);
-                } else {
-                  setCaptionLines(3);
-                  setShowHadith(true); showHadithRef.current = true;
-                  setHadithDissolving(false);
-                }
-              }
-
-              // Drive section 1 quote during playback (frame-driven)
-              if (sectionIndex === 1) {
-                const rel = frameIdx - 241; // relative to section start (0-indexed)
-                // Appear ~15 frames from end (rel 136+), fade in over 15 frames
-                if (rel < 136) {
-                  setBaalFadeProgress(0);
+                // Drive section quotes during playback
+                if (sectionIndex === 1) {
+                  const rel = frameIdx - 241;
+                  if (rel < 136) {
+                    setBaalFadeProgress(0);
+                    setSectionQuote(null);
+                    sectionQuoteRef.current = null;
+                  } else {
+                    setSectionQuote(1);
+                    sectionQuoteRef.current = 1;
+                    setQuoteDissolving(false);
+                    setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  }
+                } else if (sectionIndex === 2) {
+                  const rel = frameIdx - 392;
+                  if (rel < 136) {
+                    setSectionQuote(null);
+                    sectionQuoteRef.current = null;
+                  } else {
+                    setSectionQuote(2);
+                    sectionQuoteRef.current = 2;
+                    setQuoteDissolving(false);
+                    setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  }
+                } else if (sectionIndex === 3) {
+                  const rel = frameIdx - 543;
+                  if (rel < 101) {
+                    setSectionQuote(null);
+                    sectionQuoteRef.current = null;
+                  } else {
+                    setSectionQuote(3);
+                    sectionQuoteRef.current = 3;
+                    setQuoteDissolving(false);
+                    setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  }
+                } else if (sectionIndex === 4) {
+                  const rel = frameIdx - 664;
+                  if (rel < 101) {
+                    setSectionQuote(null);
+                    sectionQuoteRef.current = null;
+                  } else {
+                    setSectionQuote(4);
+                    sectionQuoteRef.current = 4;
+                    setQuoteDissolving(false);
+                    setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  }
+                } else if (sectionQuoteRef.current !== null) {
                   setSectionQuote(null);
                   sectionQuoteRef.current = null;
-                } else {
-                  setSectionQuote(1);
-                  sectionQuoteRef.current = 1;
                   setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
                 }
-              } else if (sectionIndex === 2) {
-                // Section 2: clip 4 — "The Qur'an Descends" (0-indexed: 392-542)
-                const rel = frameIdx - 392;
-                if (rel < 136) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
-                } else {
-                  setSectionQuote(2);
-                  sectionQuoteRef.current = 2;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
-                }
-              } else if (sectionIndex === 3) {
-                // Section 3: clip 5 — "Transformation of Arabia" (0-indexed: 543-663)
-                const rel = frameIdx - 543;
-                // 121 frames total, appear ~20 frames from end
-                if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
-                } else {
-                  setSectionQuote(3);
-                  sectionQuoteRef.current = 3;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
-                }
-              } else if (sectionIndex === 4) {
-                // Section 4: clip 6 — "The Message Reaches the World" (0-indexed: 664-784)
-                const rel = frameIdx - 664;
-                // 121 frames total, appear ~20 frames from end
-                if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
-                } else {
-                  setSectionQuote(4);
-                  sectionQuoteRef.current = 4;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
-                }
-              } else if (sectionQuoteRef.current !== null) {
-                // Clear quotes when playing other sections
-                setSectionQuote(null);
-                sectionQuoteRef.current = null;
-                setQuoteDissolving(false);
-              }
 
-              const progress = frameIdx / TOTAL_FRAMES;
-              onProgressChange?.(progress);
+                onProgressChange?.(frameIdx / TOTAL_FRAMES);
+              } // end shouldUpdateState
 
               if (reverse) {
                 frameIdx--;
@@ -391,7 +396,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (target < SECTIONS.length) {
             scrollCooldownRef.current = true;
             playSection(target);
-            setTimeout(() => { scrollCooldownRef.current = false; }, 300);
+            setTimeout(() => { scrollCooldownRef.current = false; }, 150);
           }
         } else if (delta < -10) {
           // Backward: if at end of section, reverse it. If at start, reverse previous.
@@ -400,7 +405,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (target >= 0) {
             scrollCooldownRef.current = true;
             playSection(target, true);
-            setTimeout(() => { scrollCooldownRef.current = false; }, 300);
+            setTimeout(() => { scrollCooldownRef.current = false; }, 150);
           }
         }
       };
@@ -428,7 +433,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             if (target < SECTIONS.length) {
               scrollCooldownRef.current = true;
               playSection(target);
-              setTimeout(() => { scrollCooldownRef.current = false; }, 300);
+              setTimeout(() => { scrollCooldownRef.current = false; }, 150);
             }
           } else {
             const cur = currentSectionRef.current;
@@ -436,7 +441,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             if (target >= 0) {
               scrollCooldownRef.current = true;
               playSection(target, true);
-              setTimeout(() => { scrollCooldownRef.current = false; }, 300);
+              setTimeout(() => { scrollCooldownRef.current = false; }, 150);
             }
           }
         }
@@ -555,14 +560,17 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     }
 
     return (
-      <div className="fixed inset-0">
+      <div className="fixed inset-0" style={{ contain: "layout style paint" }}>
         <canvas
           ref={(el) => {
             (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
-            if (el) resizeCanvas();
+            if (el) {
+              ctxRef.current = el.getContext("2d", { alpha: false });
+              resizeCanvas();
+            }
           }}
           className="fixed left-0 top-0 w-screen h-screen"
-          style={{ zIndex: 2 }}
+          style={{ zIndex: 2, willChange: "contents", imageRendering: "auto" }}
         />
 
         {/* Cinematic intro overlays */}
