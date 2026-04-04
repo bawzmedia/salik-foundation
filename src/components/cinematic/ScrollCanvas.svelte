@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
-  import { TOTAL_FRAMES, SECTIONS } from "@/lib/frames";
-  import { frames, isInitialLoadComplete, isFallback, updateCurrentFrame, initFrameLoader } from "@/stores/frameLoader";
+  import { onMount, onDestroy, tick } from "svelte";
+  import { TOTAL_FRAMES, SECTIONS } from "../../lib/frames";
+  import { frames, isInitialLoadComplete, isFallback, updateCurrentFrame, initFrameLoader } from "../../stores/frameLoader";
 
   // Reactive state — Svelte updates only the DOM nodes that use these
   let showScrollHint = false;
@@ -15,34 +15,37 @@
   let baalFadeProgress = 0;
   let progress = 0;
 
-  // Non-reactive engine state — plain variables, no DOM updates
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D | null = null;
-  let dpr = 1;
+  // Non-reactive engine state
+  let canvasEl: HTMLCanvasElement;
   let currentFrame = 0;
   let isPlaying = false;
   let currentSectionIdx = 0;
   let atSectionStart = true;
   let scrollCooldown = false;
 
-  function drawFrame(img: HTMLImageElement) {
-    if (!canvas || !ctx) return;
-    const cw = canvas.width;
-    const ch = canvas.height;
-    const displayW = cw / dpr;
-    const displayH = ch / dpr;
+  // Canvas rendering — uses module-level refs to avoid Svelte compiler dead-code elimination
+  let _ctx: CanvasRenderingContext2D | null = null;
+  let _dpr = 1;
+
+  function drawFrame(img: HTMLImageElement): void {
+    const c = canvasEl;
+    const ct = _ctx;
+    if (!c || !ct) return;
+    const cw = c.width;
+    const ch = c.height;
+    const d = _dpr;
+    const displayW = cw / d;
+    const displayH = ch / d;
     const imgW = img.naturalWidth;
     const imgH = img.naturalHeight;
     const scale = Math.max(displayW / imgW, displayH / imgH);
     const sw = displayW / scale;
     const sh = displayH / scale;
-    const sx = (imgW - sw) * 0.5;
-    const sy = (imgH - sh) * 0.5;
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+    ct.drawImage(img, (imgW - sw) * 0.5, (imgH - sh) * 0.5, sw, sh, 0, 0, cw, ch);
   }
 
-  function drawFrameAtIndex(index: number) {
-    let frameImg = frames[index];
+  function drawFrameAtIndex(index: number): void {
+    let frameImg: HTMLImageElement | null = frames[index];
     if (!frameImg) {
       for (let i = index - 1; i >= 0; i--) {
         if (frames[i]) { frameImg = frames[i]; break; }
@@ -51,15 +54,16 @@
     if (frameImg) drawFrame(frameImg);
   }
 
-  function resizeCanvas() {
-    if (!canvas) return;
-    dpr = window.devicePixelRatio || 1;
-    const w = Math.round(window.innerWidth * dpr);
-    const h = Math.round(window.innerHeight * dpr);
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-      ctx = canvas.getContext("2d", { alpha: false });
+  function resizeCanvas(): void {
+    const c = canvasEl;
+    if (!c) return;
+    _dpr = window.devicePixelRatio || 1;
+    const w = Math.round(window.innerWidth * _dpr);
+    const h = Math.round(window.innerHeight * _dpr);
+    if (c.width !== w || c.height !== h) {
+      c.width = w;
+      c.height = h;
+      _ctx = c.getContext("2d", { alpha: false });
     }
     drawFrameAtIndex(currentFrame);
   }
@@ -254,9 +258,13 @@
   onMount(() => {
     initFrameLoader();
 
-    // Wait for initial load
-    const unsub = isInitialLoadComplete.subscribe((loaded) => {
+    // Wait for initial load — tick() ensures DOM has updated before accessing canvas
+    const unsub = isInitialLoadComplete.subscribe(async (loaded) => {
       if (loaded) {
+        await tick();
+        if (canvasEl) {
+          _ctx = canvasEl.getContext("2d", { alpha: false });
+        }
         resizeCanvas();
         drawFrameAtIndex(0);
         setTimeout(() => playSection(0), 500);
@@ -295,7 +303,7 @@
 {:else}
   <div class="fixed inset-0" style="contain: layout style paint">
     <canvas
-      bind:this={canvas}
+      bind:this={canvasEl}
       class="fixed left-0 top-0 w-screen h-screen"
       style="z-index: 2; will-change: contents;"
     ></canvas>

@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import CinematicExperience from '../components/cinematic/CinematicExperience.svelte';
-import '../styles/global.css';
+import CinematicExperience from '@/components/cinematic/CinematicExperience';
+import '@/styles/global.css';
 ---
 
 <BaseLayout title="Salik Foundation - Spreading the Message of the Qur'an, Caring for Orphans">
-  <CinematicExperience client:load />
+  <CinematicExperience client:only="react" />
 </BaseLayout>

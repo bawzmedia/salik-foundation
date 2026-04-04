@@ -3,10 +3,9 @@
   "configurations": [
     {
       "name": "salik-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 4321,
-      "cwd": "/Users/bawazir/[Web Dev]/salik-foundation"
+      "runtimeExecutable": "/usr/local/bin/npx",
+      "runtimeArgs": ["astro", "dev"],
+      "port": 4321
     }
   ]
 }

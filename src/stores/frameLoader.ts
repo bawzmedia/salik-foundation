@@ -8,7 +8,7 @@ import {
   FALLBACK_TIMEOUT_MS,
   getFramePath,
   getResolutionTier,
-} from "@/lib/frames";
+} from "../lib/frames";
 
 // Mutable arrays — not reactive, accessed directly
 export const frames: (HTMLImageElement | null)[] = new Array(TOTAL_FRAMES).fill(null);
