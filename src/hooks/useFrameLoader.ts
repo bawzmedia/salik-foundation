@@ -101,6 +101,7 @@ export function useFrameLoader(): UseFrameLoaderReturn {
       clearTimeout(fallbackTimer);
     });
 
+    // Load flash frames if any
     if (FLASH_FRAME_COUNT > 0) {
       for (let i = 1; i <= FLASH_FRAME_COUNT; i++) {
         loadImageWithRetry(getFlashFramePath(i))
