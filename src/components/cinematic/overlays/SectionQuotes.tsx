@@ -14,7 +14,7 @@ const SectionQuotes = memo(
     return (
       <div
         className={`fixed inset-0 pointer-events-none ${dissolving ? "caption-dissolve" : ""}`}
-        style={{ zIndex: 9, willChange: "opacity, transform" }}
+        style={{ zIndex: 9 }}
       >
         {/* Section 1 — THEY BOWED TO STONE */}
         {sectionIndex === 1 && (
@@ -24,6 +24,7 @@ const SectionQuotes = memo(
             style={{
               paddingTop: "8vh",
               maxWidth: "650px",
+              willChange: "opacity, transform",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
@@ -87,6 +88,7 @@ const SectionQuotes = memo(
             ref={ref}
             className="flex flex-col items-center pt-[2vh] px-6"
             style={{
+              willChange: "opacity, transform",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
@@ -160,6 +162,7 @@ const SectionQuotes = memo(
             className="flex flex-col items-center justify-center px-6"
             style={{
               height: "100dvh",
+              willChange: "opacity, transform",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
@@ -212,6 +215,7 @@ const SectionQuotes = memo(
             className="flex flex-col items-center justify-center px-6"
             style={{
               height: "100dvh",
+              willChange: "opacity, transform",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
