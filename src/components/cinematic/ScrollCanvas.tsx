@@ -237,6 +237,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
             const elapsed = now - lastTime;
             if (elapsed >= FPS_INTERVAL) {
+              // Gate: skip advance if target frame isn't decoded yet
+              if (!frames.current[frameIdx]) {
+                requestAnimationFrame(playNext);
+                return;
+              }
               lastTime = now - (elapsed % FPS_INTERVAL);
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
