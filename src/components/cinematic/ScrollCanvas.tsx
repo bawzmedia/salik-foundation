@@ -1,6 +1,11 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, FLASH_FRAME_COUNT, SECTIONS } from "@/lib/frames";
+import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, getFocalPointForFrame, DEFAULT_FOCAL_POINT } from "@/lib/frames";
+import type { FocalPoint } from "@/lib/frames";
+import IntroOverlay from "./overlays/IntroOverlay";
+import Section0Caption from "./overlays/Section0Caption";
+import SectionQuotes from "./overlays/SectionQuotes";
+import ScrollHint from "./overlays/ScrollHint";
 
 export interface ScrollCanvasHandle {
   playFlashSequence: () => Promise<void>;
@@ -14,6 +19,7 @@ interface ScrollCanvasProps {
 const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
   function ScrollCanvas({ onProgressChange, onFallback }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const currentFrameRef = useRef(0);
     const isFlashingRef = useRef(false);
     const isPlayingRef = useRef(false);
@@ -22,7 +28,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const atSectionStartRef = useRef(true); // true = at start of section, false = at end
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "done">("none");
-    const [introOpacity, setIntroOpacity] = useState(0);
+    const introOpacityRef = useRef(0);
+    const introOverlayElRef = useRef<HTMLDivElement>(null);
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
     const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
@@ -30,7 +37,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [sectionQuote, setSectionQuote] = useState<number | null>(null);
     const [quoteDissolving, setQuoteDissolving] = useState(false);
     const sectionQuoteRef = useRef<number | null>(null);
-    const [baalFadeProgress, setBaalFadeProgress] = useState(0);
+    const baalFadeRef = useRef(0);
+    const quoteInnerElRef = useRef<HTMLDivElement>(null);
+    const quoteDisolvingRef = useRef(false);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -42,10 +51,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     }, [isFallback, onFallback]);
 
     // Draw a frame to the canvas with cover crop behavior (Retina-aware)
-    const drawFrame = useCallback((img: HTMLImageElement) => {
+    // Focal point shifts the crop origin so the subject stays visible on mobile
+    const drawFrame = useCallback((img: HTMLImageElement, focal: FocalPoint = DEFAULT_FOCAL_POINT) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext("2d");
+      if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
+      const ctx = ctxRef.current;
       if (!ctx) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -57,8 +68,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       const scale = Math.max(displayW / imgW, displayH / imgH);
       const sw = displayW / scale;
       const sh = displayH / scale;
-      const sx = (imgW - sw) / 2;
-      const sy = (imgH - sh) / 2;
+      // Anchor crop to focal point, clamped so we never read outside the image
+      const sx = Math.max(0, Math.min(imgW - sw, focal.x * imgW - sw / 2));
+      const sy = Math.max(0, Math.min(imgH - sh, focal.y * imgH - sh / 2));
 
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     }, []);
@@ -75,7 +87,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             }
           }
         }
-        if (frameImg) drawFrame(frameImg);
+        if (frameImg) drawFrame(frameImg, getFocalPointForFrame(index));
       },
       [frames, drawFrame]
     );
@@ -98,7 +110,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (frames.current[i]) { frameImg = frames.current[i]; break; }
         }
       }
-      if (frameImg) drawFrame(frameImg);
+      if (frameImg) drawFrame(frameImg, getFocalPointForFrame(idx));
     }, [drawFrame, frames]);
 
     useEffect(() => {
@@ -127,10 +139,17 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           setShowScrollHint(false);
           // Dissolve any section quote when scrolling away
           if (sectionQuoteRef.current !== null && !reverse) {
+            quoteDisolvingRef.current = true;
             setQuoteDissolving(true);
+            // Clear inline styles so CSS animation takes over
+            if (quoteInnerElRef.current) {
+              quoteInnerElRef.current.style.opacity = '';
+              quoteInnerElRef.current.style.transform = '';
+            }
             setTimeout(() => {
               setSectionQuote(null);
               sectionQuoteRef.current = null;
+              quoteDisolvingRef.current = false;
               setQuoteDissolving(false);
             }, 1500);
           }
@@ -157,7 +176,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           const endFrame = section.endFrame - 1; // 0-indexed
 
           let frameIdx = reverse ? endFrame : startFrame;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / TARGET_FPS;
           let lastTime = performance.now();
 
           // Preload frames for this section
@@ -208,13 +227,15 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 if (reverse) {
                   // Scrolled back to beginning — show ummah logo at frame 0
                   setIntroPhase("ummah");
-                  setIntroOpacity(0);
+                  introOpacityRef.current = 0;
+                  if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = '0';
                   setShowHadith(false); showHadithRef.current = false;
                   setCaptionLines(0);
                 } else {
                   // Played forward to end — captions fully visible
                   setIntroPhase("done");
-                  setIntroOpacity(0);
+                  introOpacityRef.current = 0;
+                  if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = '0';
                   setShowHadith(true); showHadithRef.current = true;
                   setCaptionLines(3);
                 }
@@ -237,6 +258,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
             const elapsed = now - lastTime;
             if (elapsed >= FPS_INTERVAL) {
+              // Gate: skip advance if target frame isn't decoded yet
+              if (!frames.current[frameIdx]) {
+                requestAnimationFrame(playNext);
+                return;
+              }
               lastTime = now - (elapsed % FPS_INTERVAL);
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
@@ -247,28 +273,25 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 const f = frameIdx; // 0-indexed frame
 
                 // Logos
+                // Compute intro opacity and phase — update ref + DOM directly
+                let nextOpacity = 0;
+                let nextPhase: "ummah" | "salik" | "done" = "done";
                 if (f < 10) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(f / 10);
+                  nextPhase = "ummah"; nextOpacity = f / 10;
                 } else if (f < 50) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1);
+                  nextPhase = "ummah"; nextOpacity = 1;
                 } else if (f < 65) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1 - (f - 50) / 15);
+                  nextPhase = "ummah"; nextOpacity = 1 - (f - 50) / 15;
                 } else if (f < 75) {
-                  setIntroPhase("salik");
-                  setIntroOpacity((f - 65) / 10);
+                  nextPhase = "salik"; nextOpacity = (f - 65) / 10;
                 } else if (f < 130) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1);
+                  nextPhase = "salik"; nextOpacity = 1;
                 } else if (f < 145) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1 - (f - 130) / 15);
-                } else {
-                  setIntroPhase("done");
-                  setIntroOpacity(0);
+                  nextPhase = "salik"; nextOpacity = 1 - (f - 130) / 15;
                 }
+                setIntroPhase(nextPhase);
+                introOpacityRef.current = nextOpacity;
+                if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = String(nextOpacity);
 
                 // Caption lines — frame position determines how many are visible
                 if (f < 165) {
@@ -289,60 +312,66 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
               }
 
-              // Drive section 1 quote during playback (frame-driven)
+              // Drive section quote fade via ref + direct DOM (no React re-render per frame)
+              // Each section: compute fade progress, update ref, update DOM element
+              const updateQuoteFade = (val: number, translateDist: number) => {
+                baalFadeRef.current = val;
+                if (quoteInnerElRef.current && !quoteDisolvingRef.current) {
+                  quoteInnerElRef.current.style.opacity = String(val);
+                  quoteInnerElRef.current.style.transform = `translateY(${(1 - val) * translateDist}px)`;
+                }
+              };
+
               if (sectionIndex === 1) {
-                const rel = frameIdx - 241; // relative to section start (0-indexed)
-                // Appear ~15 frames from end (rel 136+), fade in over 15 frames
+                const rel = frameIdx - 241;
                 if (rel < 136) {
-                  setBaalFadeProgress(0);
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  baalFadeRef.current = 0;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(1);
-                  sectionQuoteRef.current = 1;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  if (sectionQuoteRef.current !== 1) {
+                    setSectionQuote(1); sectionQuoteRef.current = 1; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 136) / 15), 15);
                 }
               } else if (sectionIndex === 2) {
-                // Section 2: clip 4 — "The Qur'an Descends" (0-indexed: 392-542)
                 const rel = frameIdx - 392;
                 if (rel < 136) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(2);
-                  sectionQuoteRef.current = 2;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  if (sectionQuoteRef.current !== 2) {
+                    setSectionQuote(2); sectionQuoteRef.current = 2; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 136) / 15), 20);
                 }
               } else if (sectionIndex === 3) {
-                // Section 3: clip 5 — "Transformation of Arabia" (0-indexed: 543-663)
                 const rel = frameIdx - 543;
-                // 121 frames total, appear ~20 frames from end
                 if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(3);
-                  sectionQuoteRef.current = 3;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  if (sectionQuoteRef.current !== 3) {
+                    setSectionQuote(3); sectionQuoteRef.current = 3; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 101) / 15), 20);
                 }
               } else if (sectionIndex === 4) {
-                // Section 4: clip 6 — "The Message Reaches the World" (0-indexed: 664-784)
                 const rel = frameIdx - 664;
-                // 121 frames total, appear ~20 frames from end
                 if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(4);
-                  sectionQuoteRef.current = 4;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  if (sectionQuoteRef.current !== 4) {
+                    setSectionQuote(4); sectionQuoteRef.current = 4; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 101) / 15), 20);
                 }
               } else if (sectionQuoteRef.current !== null) {
-                // Clear quotes when playing other sections
                 setSectionQuote(null);
                 sectionQuoteRef.current = null;
                 setQuoteDissolving(false);
@@ -496,7 +525,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (!hasFlashFrames) {
             const canvas = canvasRef.current;
             if (canvas) {
-              const ctx = canvas.getContext("2d");
+              if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
+              const ctx = ctxRef.current;
               if (ctx) {
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -507,7 +537,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           }
 
           let frame = 0;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / TARGET_FPS;
           let lastTime = performance.now();
 
           const playNext = (now: number) => {
@@ -546,7 +576,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             <div className="mx-auto h-1 w-48 overflow-hidden rounded-full bg-white/20">
               <div
                 className="h-full rounded-full bg-[#4AB3E2] transition-all duration-300"
-                style={{ width: `${Math.round((frames.current.filter(Boolean).length / 30) * 100)}%` }}
+                style={{ width: `${Math.round((frames.current.filter(Boolean).length / INITIAL_BATCH_SIZE) * 100)}%` }}
               />
             </div>
           </div>
@@ -559,6 +589,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         <canvas
           ref={(el) => {
             (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+            ctxRef.current = null; // reset cached context when canvas element changes
             if (el) resizeCanvas();
           }}
           className="fixed left-0 top-0 w-screen h-screen"
@@ -567,389 +598,30 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
         {/* Cinematic intro overlays */}
         {introPhase !== "none" && introPhase !== "done" && (
-          <div
-            className="fixed inset-0 flex items-start justify-center pointer-events-none"
-            style={{ zIndex: 8, opacity: introOpacity, paddingTop: "8vh" }}
-          >
-            {introPhase === "ummah" && (
-              <div className="flex flex-col items-center gap-4">
-                <p
-                  className="text-base md:text-lg tracking-[0.4em] uppercase"
-                  style={{
-                    color: "#ffffff",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
-                    letterSpacing: "0.4em",
-                  }}
-                >
-                  Produced by
-                </p>
-                <img
-                  src="/ummah-media-logo.png"
-                  alt="Ummah Media Corporation"
-                  className="h-36 md:h-48"
-                  style={{
-                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
-                  }}
-                />
-              </div>
-            )}
-
-            {introPhase === "salik" && (
-              <div className="flex flex-col items-center">
-                <img
-                  src="/salik-foundation-full-logo.png"
-                  alt="Salik Foundation"
-                  className="h-40 md:h-56"
-                  style={{
-                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
-                  }}
-                />
-              </div>
-            )}
-
-          </div>
+          <IntroOverlay
+            ref={introOverlayElRef}
+            phase={introPhase}
+            initialOpacity={introOpacityRef.current}
+          />
         )}
 
         {/* Section 0 — "500 YEARS OF DARKNESS" headline + subtitle */}
         {showHadith && (
-          <div
-            className={`fixed inset-0 flex items-center justify-center pointer-events-none ${hadithDissolving ? "caption-dissolve" : ""}`}
-            style={{ zIndex: 9 }}
-          >
-            <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-2">
-              <h2
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(3rem, 10vw, 8rem)",
-                  lineHeight: 0.95,
-                  letterSpacing: "0.04em",
-                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 1 ? 1 : 0,
-                  transform: captionLines >= 1 ? "translateY(0)" : "translateY(20px)",
-                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
-                  margin: 0,
-                }}
-              >
-                500 Years
-              </h2>
-              <h2
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(3rem, 10vw, 8rem)",
-                  lineHeight: 0.95,
-                  letterSpacing: "0.04em",
-                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 2 ? 1 : 0,
-                  transform: captionLines >= 2 ? "translateY(0)" : "translateY(20px)",
-                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
-                  margin: 0,
-                }}
-              >
-                Of Darkness
-              </h2>
-              <p
-                className="mt-4"
-                style={{
-                  color: "#F0D878",
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 3 ? 1 : 0,
-                  transform: captionLines >= 3 ? "translateY(0)" : "translateY(15px)",
-                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
-                  letterSpacing: "0.15em",
-                }}
-              >
-                No law. No scripture. No guidance.
-              </p>
-            </div>
-          </div>
+          <Section0Caption dissolving={hadithDissolving} captionLines={captionLines} />
         )}
 
         {/* Section quotes — positioned per scene */}
         {sectionQuote !== null && (
-          <div
-            className={`fixed inset-0 pointer-events-none ${quoteDissolving ? "caption-dissolve" : ""}`}
-            style={{ zIndex: 9 }}
-          >
-            {/* Section 1 — THEY BOWED TO STONE */}
-            {sectionQuote === 1 && (
-              <div
-                className="absolute top-0"
-                style={{
-                  left: "25vw",
-                  paddingTop: "8vh",
-                  maxWidth: "650px",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 15}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textAlign: "left",
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                  }}
-                >
-                  They Bowed<br />To Stone
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
-                    textAlign: "left",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  &ldquo;Do you call upon Baal and abandon the Best of Creators &mdash;<br />
-                  Allah, your Lord and the Lord of your forefathers?&rdquo;
-                </p>
-                <p
-                  className="mt-2 text-xs md:text-sm tracking-[0.2em] uppercase"
-                  style={{
-                    color: "rgba(240,216,120,0.4)",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textAlign: "left",
-                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  Qur&rsquo;an 37:125-126
-                </p>
-              </div>
-            )}
-
-            {/* Section 2 — ALLAH'S MERCY SENT LIGHT */}
-            {sectionQuote === 2 && (
-              <div
-                className="flex flex-col items-center pt-[2vh]"
-                style={{
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
-                }}
-              >
-                <img
-                  src="/quran-open.webp"
-                  alt="The Holy Qur'an"
-                  className="h-48 md:h-64 lg:h-80 mb-6"
-                  style={{
-                    filter: "drop-shadow(0 0 40px rgba(200,168,78,0.4)) drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
-                  }}
-                />
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  Allah&rsquo;s Mercy<br />Sent Light
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    lineHeight: 1.7,
-                    textAlign: "center",
-                    maxWidth: "600px",
-                    padding: "0 2rem",
-                  }}
-                >
-                  &ldquo;A Book sent down to bring mankind<br />
-                  out of darkness and into light.&rdquo;
-                </p>
-                <p
-                  className="mt-2 text-xs md:text-sm tracking-[0.3em] uppercase"
-                  style={{
-                    color: "rgba(240,216,120,0.4)",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  Qur&rsquo;an 14:1
-                </p>
-              </div>
-            )}
-
-            {/* Section 3 — EVERYTHING CHANGED */}
-            {sectionQuote === 3 && (
-              <div
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(3.5rem, 12vw, 9rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  Everything<br />Changed
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    textAlign: "center",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  One revelation. One message. One God.
-                </p>
-              </div>
-            )}
-
-            {/* Section 4 — THE WORLD LISTENED */}
-            {sectionQuote === 4 && (
-              <div
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(3rem, 10vw, 8rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  The World<br />Listened
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    textAlign: "center",
-                    letterSpacing: "0.08em",
-                    maxWidth: "600px",
-                    padding: "0 2rem",
-                  }}
-                >
-                  The message crossed every ocean, every mountain, every border.
-                </p>
-              </div>
-            )}
-          </div>
+          <SectionQuotes
+            ref={quoteInnerElRef}
+            sectionIndex={sectionQuote}
+            dissolving={quoteDissolving}
+            initialFade={baalFadeRef.current}
+          />
         )}
 
         {/* Cutscene scroll prompt */}
-        <div
-          className="fixed bottom-12 left-0 right-0 flex justify-center pointer-events-none"
-          style={{
-            zIndex: 10,
-            opacity: showScrollHint ? 1 : 0,
-            transition: "opacity 1.5s ease",
-          }}
-        >
-          <div
-            className="flex flex-col items-center select-none"
-            style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
-          >
-            {/* Horizontal lines flanking the text — HUD element */}
-            <div className="flex items-center gap-5 mb-4">
-              <div style={{
-                width: "120px", height: "2px",
-                background: "linear-gradient(to right, transparent, #E8D080)",
-                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
-                animation: "lineGlow 2.5s ease-in-out infinite",
-              }} />
-              <span
-                className="text-3xl md:text-4xl tracking-[0.5em] uppercase"
-                style={{
-                  color: "#F0D878",
-                  fontFamily: "'Montserrat', 'Arial', sans-serif",
-                  fontWeight: 700,
-                  textShadow: "0 0 25px rgba(240,216,120,0.9), 0 0 50px rgba(240,216,120,0.5), 0 0 80px rgba(200,168,78,0.3), 0 2px 6px rgba(0,0,0,0.9)",
-                  animation: "textGlow 2.5s ease-in-out infinite",
-                }}
-              >
-                Scroll
-              </span>
-              <div style={{
-                width: "120px", height: "2px",
-                background: "linear-gradient(to left, transparent, #E8D080)",
-                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
-                animation: "lineGlow 2.5s ease-in-out infinite",
-              }} />
-            </div>
-
-            {/* Animated chevron cascade */}
-            <div className="flex flex-col items-center" style={{ gap: "3px" }}>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.8))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.6))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.4))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <ScrollHint visible={showScrollHint} />
 
         <style>{`
           @keyframes cutsceneFloat {

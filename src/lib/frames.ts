@@ -10,12 +10,13 @@ export interface Section {
 }
 
 export const TOTAL_FRAMES = 785;
-export const INITIAL_BATCH_SIZE = 30;
+export const INITIAL_BATCH_SIZE = 10;
 export const BATCH_SIZE = 30;
 export const LOOK_AHEAD = 60;
 export const MAX_RETRIES = 2;
 export const RETRY_DELAY_MS = 500;
 export const FALLBACK_TIMEOUT_MS = 10_000;
+export const TARGET_FPS = 30;
 export const FLASH_FRAME_COUNT = 0;
 
 export const SECTIONS: Section[] = [
@@ -70,6 +71,28 @@ export const SECTIONS: Section[] = [
     textOverlay: null,
   },
 ];
+
+/** Focal point per section — (x, y) in 0–1 range, used for cover-crop on mobile. */
+export interface FocalPoint {
+  x: number; // 0 = left edge, 1 = right edge
+  y: number; // 0 = top edge, 1 = bottom edge
+}
+
+export const SECTION_FOCAL_POINTS: Record<number, FocalPoint> = {
+  1: { x: 0.5, y: 0.4 },  // Age of Ignorance — slightly above center
+  2: { x: 0.5, y: 0.4 },  // A World Waiting
+  3: { x: 0.5, y: 0.45 }, // The Qur'an Descends
+  4: { x: 0.5, y: 0.45 }, // Transformation of Arabia
+  5: { x: 0.5, y: 0.45 }, // The Message Reaches the World
+};
+
+export const DEFAULT_FOCAL_POINT: FocalPoint = { x: 0.5, y: 0.5 };
+
+export function getFocalPointForFrame(frame: number): FocalPoint {
+  const section = getSectionAtFrame(frame + 1); // getSectionAtFrame uses 1-indexed frames
+  if (!section) return DEFAULT_FOCAL_POINT;
+  return SECTION_FOCAL_POINTS[section.id] ?? DEFAULT_FOCAL_POINT;
+}
 
 export type ResolutionTier = "desktop" | "mobile";
 export const MOBILE_BREAKPOINT = 768;

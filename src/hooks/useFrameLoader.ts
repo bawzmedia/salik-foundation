@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import {
   TOTAL_FRAMES,
+  INITIAL_BATCH_SIZE,
   BATCH_SIZE,
   LOOK_AHEAD,
   MAX_RETRIES,
@@ -28,7 +29,13 @@ function loadImageWithRetry(
 ): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
+    img.onload = () => {
+      if (img.decode) {
+        img.decode().then(() => resolve(img)).catch(() => resolve(img));
+      } else {
+        resolve(img);
+      }
+    };
     img.onerror = () => {
       if (retries > 0) {
         setTimeout(() => {
@@ -52,12 +59,17 @@ export function useFrameLoader(): UseFrameLoaderReturn {
 
   const tier = useRef<"desktop" | "mobile">("desktop");
 
+  const getBatchRange = useCallback((batchIndex: number): [number, number] => {
+    if (batchIndex === 0) return [1, INITIAL_BATCH_SIZE];
+    const start = INITIAL_BATCH_SIZE + (batchIndex - 1) * BATCH_SIZE + 1;
+    return [start, Math.min(start + BATCH_SIZE - 1, TOTAL_FRAMES)];
+  }, []);
+
   const loadBatch = useCallback(async (batchIndex: number) => {
     if (loadedBatches.current.has(batchIndex)) return;
     loadedBatches.current.add(batchIndex);
 
-    const startFrame = batchIndex * BATCH_SIZE + 1;
-    const endFrame = Math.min(startFrame + BATCH_SIZE - 1, TOTAL_FRAMES);
+    const [startFrame, endFrame] = getBatchRange(batchIndex);
 
     const promises = [];
     for (let i = startFrame; i <= endFrame; i++) {
@@ -73,20 +85,26 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     }
 
     await Promise.allSettled(promises);
+  }, [getBatchRange]);
+
+  const frameToBatch = useCallback((frameIndex: number): number => {
+    if (frameIndex < INITIAL_BATCH_SIZE) return 0;
+    return Math.floor((frameIndex - INITIAL_BATCH_SIZE) / BATCH_SIZE) + 1;
   }, []);
 
   const updateCurrentFrame = useCallback(
     (frameIndex: number) => {
-      const currentBatch = Math.floor(frameIndex / BATCH_SIZE);
-      const lookAheadBatch = Math.floor((frameIndex + LOOK_AHEAD) / BATCH_SIZE);
+      const currentBatch = frameToBatch(frameIndex);
+      const lookAheadBatch = frameToBatch(Math.min(frameIndex + LOOK_AHEAD, TOTAL_FRAMES - 1));
 
       for (let b = currentBatch; b <= lookAheadBatch; b++) {
-        if (b * BATCH_SIZE < TOTAL_FRAMES) {
+        const [start] = getBatchRange(b);
+        if (start <= TOTAL_FRAMES) {
           loadBatch(b);
         }
       }
     },
-    [loadBatch]
+    [loadBatch, frameToBatch, getBatchRange]
   );
 
   useEffect(() => {
