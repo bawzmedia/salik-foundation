@@ -20,9 +20,8 @@ const SectionQuotes = memo(
         {sectionIndex === 1 && (
           <div
             ref={ref}
-            className="absolute top-0"
+            className="absolute top-0 left-0 right-0 px-6 md:px-0 md:left-[25vw] md:right-auto"
             style={{
-              left: "25vw",
               paddingTop: "8vh",
               maxWidth: "650px",
               opacity: dissolving ? undefined : initialFade,
