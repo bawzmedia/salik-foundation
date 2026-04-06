@@ -1,6 +1,10 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
 import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS } from "@/lib/frames";
+import IntroOverlay from "./overlays/IntroOverlay";
+import Section0Caption from "./overlays/Section0Caption";
+import SectionQuotes from "./overlays/SectionQuotes";
+import ScrollHint from "./overlays/ScrollHint";
 
 export interface ScrollCanvasHandle {
   playFlashSequence: () => Promise<void>;
@@ -591,394 +595,30 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
         {/* Cinematic intro overlays */}
         {introPhase !== "none" && introPhase !== "done" && (
-          <div
+          <IntroOverlay
             ref={introOverlayElRef}
-            className="fixed inset-0 flex items-start justify-center pointer-events-none"
-            style={{ zIndex: 8, opacity: introOpacityRef.current, paddingTop: "8vh" }}
-          >
-            {introPhase === "ummah" && (
-              <div className="flex flex-col items-center gap-4">
-                <p
-                  className="text-base md:text-lg tracking-[0.4em] uppercase"
-                  style={{
-                    color: "#ffffff",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
-                    letterSpacing: "0.4em",
-                  }}
-                >
-                  Produced by
-                </p>
-                <img
-                  src="/ummah-media-logo.png"
-                  alt="Ummah Media Corporation"
-                  className="h-36 md:h-48"
-                  style={{
-                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
-                  }}
-                />
-              </div>
-            )}
-
-            {introPhase === "salik" && (
-              <div className="flex flex-col items-center">
-                <img
-                  src="/salik-foundation-full-logo.png"
-                  alt="Salik Foundation"
-                  className="h-40 md:h-56"
-                  style={{
-                    filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
-                  }}
-                />
-              </div>
-            )}
-
-          </div>
+            phase={introPhase}
+            initialOpacity={introOpacityRef.current}
+          />
         )}
 
         {/* Section 0 — "500 YEARS OF DARKNESS" headline + subtitle */}
         {showHadith && (
-          <div
-            className={`fixed inset-0 flex items-center justify-center pointer-events-none ${hadithDissolving ? "caption-dissolve" : ""}`}
-            style={{ zIndex: 9 }}
-          >
-            <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-2">
-              <h2
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(3rem, 10vw, 8rem)",
-                  lineHeight: 0.95,
-                  letterSpacing: "0.04em",
-                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 1 ? 1 : 0,
-                  transform: captionLines >= 1 ? "translateY(0)" : "translateY(20px)",
-                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
-                  margin: 0,
-                }}
-              >
-                500 Years
-              </h2>
-              <h2
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(3rem, 10vw, 8rem)",
-                  lineHeight: 0.95,
-                  letterSpacing: "0.04em",
-                  textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 2 ? 1 : 0,
-                  transform: captionLines >= 2 ? "translateY(0)" : "translateY(20px)",
-                  transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
-                  margin: 0,
-                }}
-              >
-                Of Darkness
-              </h2>
-              <p
-                className="mt-4"
-                style={{
-                  color: "#F0D878",
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                  textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                  opacity: captionLines >= 3 ? 1 : 0,
-                  transform: captionLines >= 3 ? "translateY(0)" : "translateY(15px)",
-                  transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
-                  letterSpacing: "0.15em",
-                }}
-              >
-                No law. No scripture. No guidance.
-              </p>
-            </div>
-          </div>
+          <Section0Caption dissolving={hadithDissolving} captionLines={captionLines} />
         )}
 
         {/* Section quotes — positioned per scene */}
         {sectionQuote !== null && (
-          <div
-            className={`fixed inset-0 pointer-events-none ${quoteDissolving ? "caption-dissolve" : ""}`}
-            style={{ zIndex: 9 }}
-          >
-            {/* Section 1 — THEY BOWED TO STONE */}
-            {sectionQuote === 1 && (
-              <div
-                ref={quoteInnerElRef}
-                className="absolute top-0"
-                style={{
-                  left: "25vw",
-                  paddingTop: "8vh",
-                  maxWidth: "650px",
-                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 15}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textAlign: "left",
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                  }}
-                >
-                  They Bowed<br />To Stone
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
-                    textAlign: "left",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  &ldquo;Do you call upon Baal and abandon the Best of Creators &mdash;<br />
-                  Allah, your Lord and the Lord of your forefathers?&rdquo;
-                </p>
-                <p
-                  className="mt-2 text-xs md:text-sm tracking-[0.2em] uppercase"
-                  style={{
-                    color: "rgba(240,216,120,0.4)",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textAlign: "left",
-                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  Qur&rsquo;an 37:125-126
-                </p>
-              </div>
-            )}
-
-            {/* Section 2 — ALLAH'S MERCY SENT LIGHT */}
-            {sectionQuote === 2 && (
-              <div
-                ref={quoteInnerElRef}
-                className="flex flex-col items-center pt-[2vh]"
-                style={{
-                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
-                }}
-              >
-                <img
-                  src="/quran-open.webp"
-                  alt="The Holy Qur'an"
-                  className="h-48 md:h-64 lg:h-80 mb-6"
-                  style={{
-                    filter: "drop-shadow(0 0 40px rgba(200,168,78,0.4)) drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
-                  }}
-                />
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  Allah&rsquo;s Mercy<br />Sent Light
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(0.9rem, 2vw, 1.3rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    lineHeight: 1.7,
-                    textAlign: "center",
-                    maxWidth: "600px",
-                    padding: "0 2rem",
-                  }}
-                >
-                  &ldquo;A Book sent down to bring mankind<br />
-                  out of darkness and into light.&rdquo;
-                </p>
-                <p
-                  className="mt-2 text-xs md:text-sm tracking-[0.3em] uppercase"
-                  style={{
-                    color: "rgba(240,216,120,0.4)",
-                    fontFamily: "'Montserrat', 'Arial', sans-serif",
-                    fontWeight: 300,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  Qur&rsquo;an 14:1
-                </p>
-              </div>
-            )}
-
-            {/* Section 3 — EVERYTHING CHANGED */}
-            {sectionQuote === 3 && (
-              <div
-                ref={quoteInnerElRef}
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(3.5rem, 12vw, 9rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  Everything<br />Changed
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    textAlign: "center",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  One revelation. One message. One God.
-                </p>
-              </div>
-            )}
-
-            {/* Section 4 — THE WORLD LISTENED */}
-            {sectionQuote === 4 && (
-              <div
-                ref={quoteInnerElRef}
-                className="flex flex-col items-center justify-center"
-                style={{
-                  height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
-                }}
-              >
-                <h2
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "clamp(3rem, 10vw, 8rem)",
-                    lineHeight: 0.95,
-                    letterSpacing: "0.04em",
-                    textShadow: "0 0 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
-                    margin: 0,
-                    textAlign: "center",
-                  }}
-                >
-                  The World<br />Listened
-                </h2>
-                <p
-                  className="mt-4"
-                  style={{
-                    color: "#F0D878",
-                    fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-                    textShadow: "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
-                    textAlign: "center",
-                    letterSpacing: "0.08em",
-                    maxWidth: "600px",
-                    padding: "0 2rem",
-                  }}
-                >
-                  The message crossed every ocean, every mountain, every border.
-                </p>
-              </div>
-            )}
-          </div>
+          <SectionQuotes
+            ref={quoteInnerElRef}
+            sectionIndex={sectionQuote}
+            dissolving={quoteDissolving}
+            initialFade={baalFadeRef.current}
+          />
         )}
 
         {/* Cutscene scroll prompt */}
-        <div
-          className="fixed bottom-12 left-0 right-0 flex justify-center pointer-events-none"
-          style={{
-            zIndex: 10,
-            opacity: showScrollHint ? 1 : 0,
-            transition: "opacity 1.5s ease",
-          }}
-        >
-          <div
-            className="flex flex-col items-center select-none"
-            style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
-          >
-            {/* Horizontal lines flanking the text — HUD element */}
-            <div className="flex items-center gap-5 mb-4">
-              <div style={{
-                width: "120px", height: "2px",
-                background: "linear-gradient(to right, transparent, #E8D080)",
-                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
-                animation: "lineGlow 2.5s ease-in-out infinite",
-              }} />
-              <span
-                className="text-3xl md:text-4xl tracking-[0.5em] uppercase"
-                style={{
-                  color: "#F0D878",
-                  fontFamily: "'Montserrat', 'Arial', sans-serif",
-                  fontWeight: 700,
-                  textShadow: "0 0 25px rgba(240,216,120,0.9), 0 0 50px rgba(240,216,120,0.5), 0 0 80px rgba(200,168,78,0.3), 0 2px 6px rgba(0,0,0,0.9)",
-                  animation: "textGlow 2.5s ease-in-out infinite",
-                }}
-              >
-                Scroll
-              </span>
-              <div style={{
-                width: "120px", height: "2px",
-                background: "linear-gradient(to left, transparent, #E8D080)",
-                boxShadow: "0 0 12px rgba(232,208,128,0.6)",
-                animation: "lineGlow 2.5s ease-in-out infinite",
-              }} />
-            </div>
-
-            {/* Animated chevron cascade */}
-            <div className="flex flex-col items-center" style={{ gap: "3px" }}>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.8))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.2s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.6))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none"
-                style={{ animation: "chevronCascade 1.8s ease-in-out 0.4s infinite", filter: "drop-shadow(0 0 12px rgba(240,216,120,0.4))" }}>
-                <path d="M6 4L20 16L34 4" stroke="#F0D878" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <ScrollHint visible={showScrollHint} />
 
         <style>{`
           @keyframes cutsceneFloat {
