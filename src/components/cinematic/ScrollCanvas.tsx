@@ -1,6 +1,7 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS } from "@/lib/frames";
+import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, getFocalPointForFrame, DEFAULT_FOCAL_POINT } from "@/lib/frames";
+import type { FocalPoint } from "@/lib/frames";
 import IntroOverlay from "./overlays/IntroOverlay";
 import Section0Caption from "./overlays/Section0Caption";
 import SectionQuotes from "./overlays/SectionQuotes";
@@ -50,7 +51,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     }, [isFallback, onFallback]);
 
     // Draw a frame to the canvas with cover crop behavior (Retina-aware)
-    const drawFrame = useCallback((img: HTMLImageElement) => {
+    // Focal point shifts the crop origin so the subject stays visible on mobile
+    const drawFrame = useCallback((img: HTMLImageElement, focal: FocalPoint = DEFAULT_FOCAL_POINT) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
@@ -66,8 +68,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       const scale = Math.max(displayW / imgW, displayH / imgH);
       const sw = displayW / scale;
       const sh = displayH / scale;
-      const sx = (imgW - sw) / 2;
-      const sy = (imgH - sh) / 2;
+      // Anchor crop to focal point, clamped so we never read outside the image
+      const sx = Math.max(0, Math.min(imgW - sw, focal.x * imgW - sw / 2));
+      const sy = Math.max(0, Math.min(imgH - sh, focal.y * imgH - sh / 2));
 
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     }, []);
@@ -84,7 +87,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             }
           }
         }
-        if (frameImg) drawFrame(frameImg);
+        if (frameImg) drawFrame(frameImg, getFocalPointForFrame(index));
       },
       [frames, drawFrame]
     );
@@ -107,7 +110,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (frames.current[i]) { frameImg = frames.current[i]; break; }
         }
       }
-      if (frameImg) drawFrame(frameImg);
+      if (frameImg) drawFrame(frameImg, getFocalPointForFrame(idx));
     }, [drawFrame, frames]);
 
     useEffect(() => {

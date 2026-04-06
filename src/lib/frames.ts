@@ -72,6 +72,28 @@ export const SECTIONS: Section[] = [
   },
 ];
 
+/** Focal point per section — (x, y) in 0–1 range, used for cover-crop on mobile. */
+export interface FocalPoint {
+  x: number; // 0 = left edge, 1 = right edge
+  y: number; // 0 = top edge, 1 = bottom edge
+}
+
+export const SECTION_FOCAL_POINTS: Record<number, FocalPoint> = {
+  1: { x: 0.5, y: 0.4 },  // Age of Ignorance — slightly above center
+  2: { x: 0.5, y: 0.4 },  // A World Waiting
+  3: { x: 0.5, y: 0.45 }, // The Qur'an Descends
+  4: { x: 0.5, y: 0.45 }, // Transformation of Arabia
+  5: { x: 0.5, y: 0.45 }, // The Message Reaches the World
+};
+
+export const DEFAULT_FOCAL_POINT: FocalPoint = { x: 0.5, y: 0.5 };
+
+export function getFocalPointForFrame(frame: number): FocalPoint {
+  const section = getSectionAtFrame(frame + 1); // getSectionAtFrame uses 1-indexed frames
+  if (!section) return DEFAULT_FOCAL_POINT;
+  return SECTION_FOCAL_POINTS[section.id] ?? DEFAULT_FOCAL_POINT;
+}
+
 export type ResolutionTier = "desktop" | "mobile";
 export const MOBILE_BREAKPOINT = 768;
 
