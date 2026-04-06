@@ -20,6 +20,7 @@ interface UseFrameLoaderReturn {
   isInitialLoadComplete: boolean;
   isFallback: boolean;
   updateCurrentFrame: (frameIndex: number) => void;
+  waitForFrames: (startIdx: number, count: number) => Promise<void>;
 }
 
 function loadImageWithRetry(
@@ -107,6 +108,27 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     [loadBatch, frameToBatch, getBatchRange]
   );
 
+  const waitForFrames = useCallback(
+    (startIdx: number, count: number): Promise<void> => {
+      return new Promise((resolve) => {
+        const end = Math.min(startIdx + count, TOTAL_FRAMES);
+        const deadline = performance.now() + 2000; // 2s max wait, then play anyway
+        const check = () => {
+          if (performance.now() > deadline) { resolve(); return; }
+          for (let i = startIdx; i < end; i++) {
+            if (!frames.current[i]) {
+              requestAnimationFrame(check);
+              return;
+            }
+          }
+          resolve();
+        };
+        check();
+      });
+    },
+    [frames]
+  );
+
   useEffect(() => {
     tier.current = getResolutionTier(window.innerWidth);
 
@@ -140,5 +162,6 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     isInitialLoadComplete,
     isFallback,
     updateCurrentFrame,
+    waitForFrames,
   };
 }
