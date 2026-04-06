@@ -141,16 +141,20 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (sectionQuoteRef.current !== null && !reverse) {
             quoteDisolvingRef.current = true;
             setQuoteDissolving(true);
-            // Clear inline styles so CSS animation takes over
+            // Apply dissolve animation directly to the ref element (whole block)
             if (quoteInnerElRef.current) {
               quoteInnerElRef.current.style.opacity = '';
               quoteInnerElRef.current.style.transform = '';
+              quoteInnerElRef.current.classList.add('quote-dissolving');
             }
             setTimeout(() => {
               setSectionQuote(null);
               sectionQuoteRef.current = null;
               quoteDisolvingRef.current = false;
               setQuoteDissolving(false);
+              if (quoteInnerElRef.current) {
+                quoteInnerElRef.current.classList.remove('quote-dissolving');
+              }
             }, 1500);
           }
           // Dissolve captions when scrolling forward away from section 0
@@ -667,14 +671,19 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           .quote-fade-in {
             animation: quoteFadeIn 1.5s ease-out forwards;
           }
-          .caption-dissolve p:nth-child(1) {
+          /* Section 0 caption — staggered dissolve per line */
+          .caption-dissolve .caption-content > :nth-child(1) {
             animation: captionDissolveOut 1.2s ease-in forwards;
           }
-          .caption-dissolve p:nth-child(2) {
+          .caption-dissolve .caption-content > :nth-child(2) {
             animation: captionDissolveOut 1.2s ease-in 0.15s forwards;
           }
-          .caption-dissolve p:nth-child(3) {
+          .caption-dissolve .caption-content > :nth-child(3) {
             animation: captionDissolveOut 1.2s ease-in 0.3s forwards;
+          }
+          /* Section quotes — whole block dissolves as one unit */
+          .quote-dissolving {
+            animation: captionDissolveOut 1.2s ease-in forwards !important;
           }
         `}</style>
       </div>
