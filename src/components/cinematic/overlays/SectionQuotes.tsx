@@ -63,9 +63,8 @@ const SectionQuotes = memo(
               }}
             >
               &ldquo;Do you call upon Baal and abandon the Best of Creators
-              &mdash;
-              <br />
-              Allah, your Lord and the Lord of your forefathers?&rdquo;
+              &mdash; Allah, your Lord and the Lord of your
+              forefathers?&rdquo;
             </p>
             <p
               className="mt-2 text-xs md:text-sm tracking-[0.2em] uppercase"
@@ -86,7 +85,7 @@ const SectionQuotes = memo(
         {sectionIndex === 2 && (
           <div
             ref={ref}
-            className="flex flex-col items-center pt-[2vh]"
+            className="flex flex-col items-center pt-[2vh] px-6"
             style={{
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
@@ -137,9 +136,8 @@ const SectionQuotes = memo(
                 padding: "0 2rem",
               }}
             >
-              &ldquo;A Book sent down to bring mankind
-              <br />
-              out of darkness and into light.&rdquo;
+              &ldquo;A Book sent down to bring mankind out of darkness and
+              into light.&rdquo;
             </p>
             <p
               className="mt-2 text-xs md:text-sm tracking-[0.3em] uppercase"
@@ -159,7 +157,7 @@ const SectionQuotes = memo(
         {sectionIndex === 3 && (
           <div
             ref={ref}
-            className="flex flex-col items-center justify-center"
+            className="flex flex-col items-center justify-center px-6"
             style={{
               height: "100dvh",
               opacity: dissolving ? undefined : initialFade,
@@ -198,6 +196,8 @@ const SectionQuotes = memo(
                   "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
                 textAlign: "center",
                 letterSpacing: "0.1em",
+                maxWidth: "600px",
+                padding: "0 1rem",
               }}
             >
               One revelation. One message. One God.
@@ -209,7 +209,7 @@ const SectionQuotes = memo(
         {sectionIndex === 4 && (
           <div
             ref={ref}
-            className="flex flex-col items-center justify-center"
+            className="flex flex-col items-center justify-center px-6"
             style={{
               height: "100dvh",
               opacity: dissolving ? undefined : initialFade,

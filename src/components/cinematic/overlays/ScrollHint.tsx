@@ -19,8 +19,9 @@ const ScrollHint = memo(function ScrollHint({ visible }: ScrollHintProps) {
         style={{ animation: "cutsceneFloat 3s ease-in-out infinite" }}
       >
         {/* Horizontal lines flanking the text — HUD element */}
-        <div className="flex items-center gap-5 mb-4">
+        <div className="flex items-center gap-3 md:gap-5 mb-4">
           <div
+            className="hidden sm:block"
             style={{
               width: "120px",
               height: "2px",
@@ -30,7 +31,7 @@ const ScrollHint = memo(function ScrollHint({ visible }: ScrollHintProps) {
             }}
           />
           <span
-            className="text-3xl md:text-4xl tracking-[0.5em] uppercase"
+            className="text-2xl md:text-4xl tracking-[0.4em] md:tracking-[0.5em] uppercase"
             style={{
               color: "#F0D878",
               fontFamily: "'Montserrat', 'Arial', sans-serif",
@@ -43,6 +44,7 @@ const ScrollHint = memo(function ScrollHint({ visible }: ScrollHintProps) {
             Scroll
           </span>
           <div
+            className="hidden sm:block"
             style={{
               width: "120px",
               height: "2px",
