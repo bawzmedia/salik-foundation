@@ -10,6 +10,7 @@ export default function CinematicExperience() {
   const [progress, setProgress] = useState(0);
   const [useFallback, setUseFallback] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -91,7 +92,42 @@ export default function CinematicExperience() {
             Donate
           </a>
         </div>
+        <button
+          className="pointer-events-auto ml-auto text-white/70 md:hidden"
+          aria-label="Open menu"
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md md:hidden">
+          <div className="flex h-full flex-col items-center justify-center gap-10" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+            <a href="/about" className="transition-all hover:text-white" style={{ fontSize: "2.5rem", color: "#C8A84E", letterSpacing: "0.12em" }}>About</a>
+            <a href="/programs" className="transition-all hover:text-white" style={{ fontSize: "2.5rem", color: "#C8A84E", letterSpacing: "0.12em" }}>Programs</a>
+            <a href="/contact" className="transition-all hover:text-white" style={{ fontSize: "2.5rem", color: "#C8A84E", letterSpacing: "0.12em" }}>Contact</a>
+            <a
+              href="https://www.canadahelps.org/en/charities/salik-foundation/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 rounded-sm border border-[#C8A84E]/50 bg-black/20 px-10 py-4 transition-all hover:bg-[#C8A84E]/20"
+              style={{ fontSize: "2.5rem", color: "#C8A84E", letterSpacing: "0.12em" }}
+            >
+              Donate
+            </a>
+            <button
+              className="mt-8 text-white/50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
