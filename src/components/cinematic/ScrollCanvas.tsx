@@ -1,6 +1,6 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, getFocalPointForFrame, DEFAULT_FOCAL_POINT } from "@/lib/frames";
+import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, PREBUFFER_COUNT, getFocalPointForFrame, DEFAULT_FOCAL_POINT } from "@/lib/frames";
 import type { FocalPoint } from "@/lib/frames";
 import IntroOverlay from "./overlays/IntroOverlay";
 import Section0Caption from "./overlays/Section0Caption";
@@ -43,7 +43,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
-    const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame } =
+    const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame, waitForFrames } =
       useFrameLoader();
 
     useEffect(() => {
@@ -189,6 +189,14 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             if (done) {
               isPlayingRef.current = false;
 
+              // Proactively preload the adjacent section
+              if (!reverse && sectionIndex + 1 < SECTIONS.length) {
+                updateCurrentFrame(SECTIONS[sectionIndex + 1].startFrame - 1);
+              }
+              if (reverse && sectionIndex - 1 >= 0) {
+                updateCurrentFrame(SECTIONS[sectionIndex - 1].startFrame - 1);
+              }
+
               if (reverse && sectionIndex > 0) {
                 // Land on the previous section's last frame (HD still)
                 const prevSection = sectionIndex - 1;
@@ -258,11 +266,6 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
             const elapsed = now - lastTime;
             if (elapsed >= FPS_INTERVAL) {
-              // Gate: skip advance if target frame isn't decoded yet
-              if (!frames.current[frameIdx]) {
-                requestAnimationFrame(playNext);
-                return;
-              }
               lastTime = now - (elapsed % FPS_INTERVAL);
               currentFrameRef.current = frameIdx;
               drawFrameAtIndex(frameIdx);
@@ -388,10 +391,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             }
             requestAnimationFrame(playNext);
           };
-          requestAnimationFrame(playNext);
+          // Wait for the first PREBUFFER_COUNT frames before starting rAF loop
+          waitForFrames(frameIdx, PREBUFFER_COUNT).then(() => {
+            requestAnimationFrame(playNext);
+          });
         });
       },
-      [drawFrameAtIndex, updateCurrentFrame, onProgressChange, stopIdleLoop]
+      [drawFrameAtIndex, updateCurrentFrame, waitForFrames, onProgressChange, stopIdleLoop]
     );
 
     // Play multiple sections back-to-back
