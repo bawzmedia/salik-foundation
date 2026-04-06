@@ -15,14 +15,16 @@ const { title, description = "Guided by compassion, justice, and service to huma
     <meta name="description" content={description} />
     <meta name="keywords" content="charity, orphans, Quran, Islamic foundation, humanitarian aid, education, sponsorship, dawah" />
     <link rel="icon" type="image/png" href="/salik-icon.png" />
+    <link rel="preload" as="image" type="image/webp" href="/frames/mobile/frame-0001.webp" media="(max-width: 768px)" />
+    <link rel="preload" as="image" type="image/webp" href="/frames/desktop/frame-0001.webp" media="(min-width: 769px)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;700&display=swap" rel="stylesheet" />
 
     <!-- Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="/salik-foundation-logo.png" />
+    <meta property="og:image" content="/og-image.jpg" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={Astro.url.href} />
 
@@ -51,51 +53,25 @@ const { title, description = "Guided by compassion, justice, and service to huma
   <body class="antialiased" oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
     <slot />
 
-    <!-- Source protection -->
+    <!-- Source protection (deferred to yield to initial render) -->
     <script is:inline>
-      // Disable right-click context menu
-      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-      // Disable text selection
-      document.addEventListener('selectstart', function(e) { e.preventDefault(); });
-
-      // Disable image/element dragging
-      document.addEventListener('dragstart', function(e) { e.preventDefault(); });
-
-      // Block common dev tools shortcuts
-      document.addEventListener('keydown', function(e) {
-        // F12
-        if (e.key === 'F12') { e.preventDefault(); return; }
-        // Ctrl/Cmd + Shift + I (Inspect)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') { e.preventDefault(); return; }
-        // Ctrl/Cmd + Shift + J (Console)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') { e.preventDefault(); return; }
-        // Ctrl/Cmd + Shift + C (Element picker)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') { e.preventDefault(); return; }
-        // Ctrl/Cmd + U (View Source)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); return; }
-        // Ctrl/Cmd + S (Save page)
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); return; }
-        // Ctrl/Cmd + A (Select All)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); return; }
-        // Ctrl/Cmd + C (Copy) — on body only
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); return; }
-        // Ctrl/Cmd + P (Print)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); return; }
+      (window.requestIdleCallback || function(cb) { setTimeout(cb, 1); })(function() {
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'F12') { e.preventDefault(); return; }
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) { e.preventDefault(); return; }
+          if ((e.ctrlKey || e.metaKey) && /^[usacp]$/.test(e.key)) { e.preventDefault(); return; }
+        });
+        document.addEventListener('copy', function(e) { e.preventDefault(); });
+        var s = document.createElement('style');
+        s.textContent = '@media print { body { display: none !important; } }';
+        document.head.appendChild(s);
+        console.clear();
+        console.log('%cStop!', 'color: red; font-size: 50px; font-weight: bold;');
+        console.log('%cThis is a protected website. Unauthorized copying is prohibited.', 'font-size: 16px;');
       });
-
-      // Disable copy
-      document.addEventListener('copy', function(e) { e.preventDefault(); });
-
-      // Disable print
-      var style = document.createElement('style');
-      style.textContent = '@media print { body { display: none !important; } }';
-      document.head.appendChild(style);
-
-      // Clear console
-      console.clear();
-      console.log('%cStop!', 'color: red; font-size: 50px; font-weight: bold;');
-      console.log('%cThis is a protected website. Unauthorized copying is prohibited.', 'font-size: 16px;');
     </script>
 
     <noscript>

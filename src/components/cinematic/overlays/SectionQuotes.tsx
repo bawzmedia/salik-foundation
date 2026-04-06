@@ -14,7 +14,7 @@ const SectionQuotes = memo(
     return (
       <div
         className={`fixed inset-0 pointer-events-none ${dissolving ? "caption-dissolve" : ""}`}
-        style={{ zIndex: 9 }}
+        style={{ zIndex: 9, willChange: "opacity, transform" }}
       >
         {/* Section 1 — THEY BOWED TO STONE */}
         {sectionIndex === 1 && (

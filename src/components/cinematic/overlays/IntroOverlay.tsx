@@ -14,7 +14,7 @@ const IntroOverlay = memo(
       <div
         ref={ref}
         className="fixed inset-0 flex items-start justify-center pointer-events-none"
-        style={{ zIndex: 8, opacity: initialOpacity, paddingTop: "8vh" }}
+        style={{ zIndex: 8, opacity: initialOpacity, paddingTop: "8vh", willChange: "opacity" }}
       >
         {phase === "ummah" && (
           <div className="flex flex-col items-center gap-4">

@@ -12,7 +12,7 @@ const Section0Caption = memo(function Section0Caption({
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center pointer-events-none ${dissolving ? "caption-dissolve" : ""}`}
-      style={{ zIndex: 9 }}
+      style={{ zIndex: 9, willChange: "opacity, transform" }}
     >
       <div className="text-center px-8 max-w-4xl flex flex-col items-center gap-2">
         <h2
