@@ -10,7 +10,7 @@ export interface Section {
 }
 
 export const TOTAL_FRAMES = 785;
-export const INITIAL_BATCH_SIZE = 30;
+export const INITIAL_BATCH_SIZE = 10;
 export const BATCH_SIZE = 30;
 export const LOOK_AHEAD = 60;
 export const MAX_RETRIES = 2;

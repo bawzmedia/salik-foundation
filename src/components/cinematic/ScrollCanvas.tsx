@@ -1,6 +1,6 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS } from "@/lib/frames";
+import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS } from "@/lib/frames";
 
 export interface ScrollCanvasHandle {
   playFlashSequence: () => Promise<void>;
@@ -554,7 +554,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             <div className="mx-auto h-1 w-48 overflow-hidden rounded-full bg-white/20">
               <div
                 className="h-full rounded-full bg-[#4AB3E2] transition-all duration-300"
-                style={{ width: `${Math.round((frames.current.filter(Boolean).length / 30) * 100)}%` }}
+                style={{ width: `${Math.round((frames.current.filter(Boolean).length / INITIAL_BATCH_SIZE) * 100)}%` }}
               />
             </div>
           </div>
