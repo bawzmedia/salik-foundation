@@ -23,7 +23,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const atSectionStartRef = useRef(true); // true = at start of section, false = at end
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [introPhase, setIntroPhase] = useState<"none" | "ummah" | "salik" | "done">("none");
-    const [introOpacity, setIntroOpacity] = useState(0);
+    const introOpacityRef = useRef(0);
+    const introOverlayElRef = useRef<HTMLDivElement>(null);
     const [showHadith, setShowHadith] = useState(false);
     const [hadithDissolving, setHadithDissolving] = useState(false);
     const [captionLines, setCaptionLines] = useState<number>(0); // 0-3 lines visible
@@ -31,7 +32,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const [sectionQuote, setSectionQuote] = useState<number | null>(null);
     const [quoteDissolving, setQuoteDissolving] = useState(false);
     const sectionQuoteRef = useRef<number | null>(null);
-    const [baalFadeProgress, setBaalFadeProgress] = useState(0);
+    const baalFadeRef = useRef(0);
+    const quoteInnerElRef = useRef<HTMLDivElement>(null);
+    const quoteDisolvingRef = useRef(false);
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
@@ -129,10 +132,17 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           setShowScrollHint(false);
           // Dissolve any section quote when scrolling away
           if (sectionQuoteRef.current !== null && !reverse) {
+            quoteDisolvingRef.current = true;
             setQuoteDissolving(true);
+            // Clear inline styles so CSS animation takes over
+            if (quoteInnerElRef.current) {
+              quoteInnerElRef.current.style.opacity = '';
+              quoteInnerElRef.current.style.transform = '';
+            }
             setTimeout(() => {
               setSectionQuote(null);
               sectionQuoteRef.current = null;
+              quoteDisolvingRef.current = false;
               setQuoteDissolving(false);
             }, 1500);
           }
@@ -210,13 +220,15 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 if (reverse) {
                   // Scrolled back to beginning — show ummah logo at frame 0
                   setIntroPhase("ummah");
-                  setIntroOpacity(0);
+                  introOpacityRef.current = 0;
+                  if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = '0';
                   setShowHadith(false); showHadithRef.current = false;
                   setCaptionLines(0);
                 } else {
                   // Played forward to end — captions fully visible
                   setIntroPhase("done");
-                  setIntroOpacity(0);
+                  introOpacityRef.current = 0;
+                  if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = '0';
                   setShowHadith(true); showHadithRef.current = true;
                   setCaptionLines(3);
                 }
@@ -254,28 +266,25 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 const f = frameIdx; // 0-indexed frame
 
                 // Logos
+                // Compute intro opacity and phase — update ref + DOM directly
+                let nextOpacity = 0;
+                let nextPhase: "ummah" | "salik" | "done" = "done";
                 if (f < 10) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(f / 10);
+                  nextPhase = "ummah"; nextOpacity = f / 10;
                 } else if (f < 50) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1);
+                  nextPhase = "ummah"; nextOpacity = 1;
                 } else if (f < 65) {
-                  setIntroPhase("ummah");
-                  setIntroOpacity(1 - (f - 50) / 15);
+                  nextPhase = "ummah"; nextOpacity = 1 - (f - 50) / 15;
                 } else if (f < 75) {
-                  setIntroPhase("salik");
-                  setIntroOpacity((f - 65) / 10);
+                  nextPhase = "salik"; nextOpacity = (f - 65) / 10;
                 } else if (f < 130) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1);
+                  nextPhase = "salik"; nextOpacity = 1;
                 } else if (f < 145) {
-                  setIntroPhase("salik");
-                  setIntroOpacity(1 - (f - 130) / 15);
-                } else {
-                  setIntroPhase("done");
-                  setIntroOpacity(0);
+                  nextPhase = "salik"; nextOpacity = 1 - (f - 130) / 15;
                 }
+                setIntroPhase(nextPhase);
+                introOpacityRef.current = nextOpacity;
+                if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = String(nextOpacity);
 
                 // Caption lines — frame position determines how many are visible
                 if (f < 165) {
@@ -296,60 +305,66 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
               }
 
-              // Drive section 1 quote during playback (frame-driven)
+              // Drive section quote fade via ref + direct DOM (no React re-render per frame)
+              // Each section: compute fade progress, update ref, update DOM element
+              const updateQuoteFade = (val: number, translateDist: number) => {
+                baalFadeRef.current = val;
+                if (quoteInnerElRef.current && !quoteDisolvingRef.current) {
+                  quoteInnerElRef.current.style.opacity = String(val);
+                  quoteInnerElRef.current.style.transform = `translateY(${(1 - val) * translateDist}px)`;
+                }
+              };
+
               if (sectionIndex === 1) {
-                const rel = frameIdx - 241; // relative to section start (0-indexed)
-                // Appear ~15 frames from end (rel 136+), fade in over 15 frames
+                const rel = frameIdx - 241;
                 if (rel < 136) {
-                  setBaalFadeProgress(0);
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  baalFadeRef.current = 0;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(1);
-                  sectionQuoteRef.current = 1;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  if (sectionQuoteRef.current !== 1) {
+                    setSectionQuote(1); sectionQuoteRef.current = 1; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 136) / 15), 15);
                 }
               } else if (sectionIndex === 2) {
-                // Section 2: clip 4 — "The Qur'an Descends" (0-indexed: 392-542)
                 const rel = frameIdx - 392;
                 if (rel < 136) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(2);
-                  sectionQuoteRef.current = 2;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 136) / 15));
+                  if (sectionQuoteRef.current !== 2) {
+                    setSectionQuote(2); sectionQuoteRef.current = 2; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 136) / 15), 20);
                 }
               } else if (sectionIndex === 3) {
-                // Section 3: clip 5 — "Transformation of Arabia" (0-indexed: 543-663)
                 const rel = frameIdx - 543;
-                // 121 frames total, appear ~20 frames from end
                 if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(3);
-                  sectionQuoteRef.current = 3;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  if (sectionQuoteRef.current !== 3) {
+                    setSectionQuote(3); sectionQuoteRef.current = 3; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 101) / 15), 20);
                 }
               } else if (sectionIndex === 4) {
-                // Section 4: clip 6 — "The Message Reaches the World" (0-indexed: 664-784)
                 const rel = frameIdx - 664;
-                // 121 frames total, appear ~20 frames from end
                 if (rel < 101) {
-                  setSectionQuote(null);
-                  sectionQuoteRef.current = null;
+                  if (sectionQuoteRef.current !== null) {
+                    setSectionQuote(null); sectionQuoteRef.current = null;
+                  }
                 } else {
-                  setSectionQuote(4);
-                  sectionQuoteRef.current = 4;
-                  setQuoteDissolving(false);
-                  setBaalFadeProgress(Math.min(1, (rel - 101) / 15));
+                  if (sectionQuoteRef.current !== 4) {
+                    setSectionQuote(4); sectionQuoteRef.current = 4; setQuoteDissolving(false);
+                  }
+                  updateQuoteFade(Math.min(1, (rel - 101) / 15), 20);
                 }
               } else if (sectionQuoteRef.current !== null) {
-                // Clear quotes when playing other sections
                 setSectionQuote(null);
                 sectionQuoteRef.current = null;
                 setQuoteDissolving(false);
@@ -577,8 +592,9 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         {/* Cinematic intro overlays */}
         {introPhase !== "none" && introPhase !== "done" && (
           <div
+            ref={introOverlayElRef}
             className="fixed inset-0 flex items-start justify-center pointer-events-none"
-            style={{ zIndex: 8, opacity: introOpacity, paddingTop: "8vh" }}
+            style={{ zIndex: 8, opacity: introOpacityRef.current, paddingTop: "8vh" }}
           >
             {introPhase === "ummah" && (
               <div className="flex flex-col items-center gap-4">
@@ -692,13 +708,14 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             {/* Section 1 — THEY BOWED TO STONE */}
             {sectionQuote === 1 && (
               <div
+                ref={quoteInnerElRef}
                 className="absolute top-0"
                 style={{
                   left: "25vw",
                   paddingTop: "8vh",
                   maxWidth: "650px",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 15}px)`,
+                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 15}px)`,
                 }}
               >
                 <h2
@@ -750,10 +767,11 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             {/* Section 2 — ALLAH'S MERCY SENT LIGHT */}
             {sectionQuote === 2 && (
               <div
+                ref={quoteInnerElRef}
                 className="flex flex-col items-center pt-[2vh]"
                 style={{
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
                 }}
               >
                 <img
@@ -814,11 +832,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             {/* Section 3 — EVERYTHING CHANGED */}
             {sectionQuote === 3 && (
               <div
+                ref={quoteInnerElRef}
                 className="flex flex-col items-center justify-center"
                 style={{
                   height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
                 }}
               >
                 <h2
@@ -857,11 +876,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             {/* Section 4 — THE WORLD LISTENED */}
             {sectionQuote === 4 && (
               <div
+                ref={quoteInnerElRef}
                 className="flex flex-col items-center justify-center"
                 style={{
                   height: "100vh",
-                  opacity: quoteDissolving ? undefined : baalFadeProgress,
-                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeProgress) * 20}px)`,
+                  opacity: quoteDissolving ? undefined : baalFadeRef.current,
+                  transform: quoteDissolving ? undefined : `translateY(${(1 - baalFadeRef.current) * 20}px)`,
                 }}
               >
                 <h2
