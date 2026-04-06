@@ -161,7 +161,7 @@ const SectionQuotes = memo(
             ref={ref}
             className="flex flex-col items-center justify-center"
             style={{
-              height: "100vh",
+              height: "100dvh",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
@@ -211,7 +211,7 @@ const SectionQuotes = memo(
             ref={ref}
             className="flex flex-col items-center justify-center"
             style={{
-              height: "100vh",
+              height: "100dvh",
               opacity: dissolving ? undefined : initialFade,
               transform: dissolving
                 ? undefined
