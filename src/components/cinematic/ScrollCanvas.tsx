@@ -1,6 +1,6 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, FLASH_FRAME_COUNT, SECTIONS } from "@/lib/frames";
+import { TOTAL_FRAMES, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS } from "@/lib/frames";
 
 export interface ScrollCanvasHandle {
   playFlashSequence: () => Promise<void>;
@@ -157,7 +157,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           const endFrame = section.endFrame - 1; // 0-indexed
 
           let frameIdx = reverse ? endFrame : startFrame;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / TARGET_FPS;
           let lastTime = performance.now();
 
           // Preload frames for this section
@@ -507,7 +507,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           }
 
           let frame = 0;
-          const FPS_INTERVAL = 1000 / 48;
+          const FPS_INTERVAL = 1000 / TARGET_FPS;
           let lastTime = performance.now();
 
           const playNext = (now: number) => {

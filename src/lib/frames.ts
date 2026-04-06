@@ -16,6 +16,7 @@ export const LOOK_AHEAD = 60;
 export const MAX_RETRIES = 2;
 export const RETRY_DELAY_MS = 500;
 export const FALLBACK_TIMEOUT_MS = 10_000;
+export const TARGET_FPS = 30;
 export const FLASH_FRAME_COUNT = 0;
 
 export const SECTIONS: Section[] = [
