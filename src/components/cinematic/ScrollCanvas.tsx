@@ -14,6 +14,7 @@ interface ScrollCanvasProps {
 const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
   function ScrollCanvas({ onProgressChange, onFallback }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const currentFrameRef = useRef(0);
     const isFlashingRef = useRef(false);
     const isPlayingRef = useRef(false);
@@ -45,7 +46,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const drawFrame = useCallback((img: HTMLImageElement) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext("2d");
+      if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
+      const ctx = ctxRef.current;
       if (!ctx) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -501,7 +503,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           if (!hasFlashFrames) {
             const canvas = canvasRef.current;
             if (canvas) {
-              const ctx = canvas.getContext("2d");
+              if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
+              const ctx = ctxRef.current;
               if (ctx) {
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -564,6 +567,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         <canvas
           ref={(el) => {
             (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+            ctxRef.current = null; // reset cached context when canvas element changes
             if (el) resizeCanvas();
           }}
           className="fixed left-0 top-0 w-screen h-screen"
