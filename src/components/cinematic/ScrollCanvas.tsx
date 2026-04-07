@@ -303,35 +303,37 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 const f = frameIdx; // 0-indexed frame
 
                 // Logos
-                // Compute intro opacity and phase — update ref + DOM directly
+                // Timing: 20-frame fades (0.67s) + 60-frame holds (2s) per logo
+                //   Ummah : frames   0-19 fade in │  20-79 hold │  80-99 fade out
+                //   Salik : frames 100-119 fade in │ 120-179 hold │ 180-199 fade out
                 let nextOpacity = 0;
                 let nextPhase: "ummah" | "salik" | "done" = "done";
-                if (f < 10) {
-                  nextPhase = "ummah"; nextOpacity = f / 10;
-                } else if (f < 50) {
+                if (f < 20) {
+                  nextPhase = "ummah"; nextOpacity = f / 20;
+                } else if (f < 80) {
                   nextPhase = "ummah"; nextOpacity = 1;
-                } else if (f < 65) {
-                  nextPhase = "ummah"; nextOpacity = 1 - (f - 50) / 15;
-                } else if (f < 75) {
-                  nextPhase = "salik"; nextOpacity = (f - 65) / 10;
-                } else if (f < 130) {
+                } else if (f < 100) {
+                  nextPhase = "ummah"; nextOpacity = 1 - (f - 80) / 20;
+                } else if (f < 120) {
+                  nextPhase = "salik"; nextOpacity = (f - 100) / 20;
+                } else if (f < 180) {
                   nextPhase = "salik"; nextOpacity = 1;
-                } else if (f < 145) {
-                  nextPhase = "salik"; nextOpacity = 1 - (f - 130) / 15;
+                } else if (f < 200) {
+                  nextPhase = "salik"; nextOpacity = 1 - (f - 180) / 20;
                 }
                 setIntroPhase(nextPhase);
                 introOpacityRef.current = nextOpacity;
                 if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = String(nextOpacity);
 
-                // Caption lines — frame position determines how many are visible
-                if (f < 165) {
+                // Caption lines — appear after logo sequence (frame 200+)
+                if (f < 200) {
                   setCaptionLines(0);
                   setShowHadith(false); showHadithRef.current = false;
-                } else if (f < 190) {
+                } else if (f < 214) {
                   setCaptionLines(1);
                   setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
-                } else if (f < 215) {
+                } else if (f < 228) {
                   setCaptionLines(2);
                   setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);

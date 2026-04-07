@@ -13,13 +13,13 @@ const IntroOverlay = memo(
     return (
       <div
         ref={ref}
-        className="fixed inset-0 flex items-start justify-center pointer-events-none"
-        style={{ zIndex: 8, opacity: initialOpacity, paddingTop: "8vh", willChange: "opacity" }}
+        className="fixed inset-0 flex items-center justify-center pointer-events-none"
+        style={{ zIndex: 8, opacity: initialOpacity, willChange: "opacity" }}
       >
         {phase === "ummah" && (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-5">
             <p
-              className="text-base md:text-lg tracking-[0.4em] uppercase"
+              className="text-sm md:text-base tracking-[0.4em] uppercase"
               style={{
                 color: "#ffffff",
                 fontFamily: "'Montserrat', 'Arial', sans-serif",
@@ -34,9 +34,9 @@ const IntroOverlay = memo(
             <img
               src="/ummah-media-logo.png"
               alt="Ummah Media Corporation"
-              className="h-36 md:h-48"
+              className="h-48 md:h-64"
               style={{
-                filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
+                filter: "drop-shadow(0 4px 40px rgba(0,0,0,0.9))",
               }}
             />
           </div>
@@ -47,9 +47,9 @@ const IntroOverlay = memo(
             <img
               src="/salik-foundation-full-logo.png"
               alt="Salik Foundation"
-              className="h-40 md:h-56"
+              className="h-52 md:h-72"
               style={{
-                filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.8))",
+                filter: "drop-shadow(0 4px 40px rgba(0,0,0,0.9))",
               }}
             />
           </div>

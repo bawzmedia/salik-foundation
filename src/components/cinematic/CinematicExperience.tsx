@@ -32,7 +32,7 @@ export default function CinematicExperience() {
       <ScrollProgress progress={progress} />
 
       {/* Floating nav — Bebas Neue, evenly spaced across top */}
-      <div className="pointer-events-none fixed left-0 right-0 top-0 z-30 flex items-center px-6 md:px-12 py-5">
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-[60] flex items-center px-6 md:px-12 py-5">
         <a href="/" className="pointer-events-auto shrink-0">
           <img
             src="/salik-foundation-logo.png"
