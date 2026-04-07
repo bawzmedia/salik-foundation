@@ -26,8 +26,8 @@ const Section0Caption = memo(function Section0Caption({
             textShadow:
               "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
             opacity: captionLines >= 1 ? 1 : 0,
-            transform: captionLines >= 1 ? "translateY(0)" : "translateY(20px)",
-            transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+            transform: captionLines >= 1 ? "translateY(0)" : "translateY(40px)",
+            transition: "opacity 1.6s cubic-bezier(0.22, 1, 0.36, 1), transform 1.6s cubic-bezier(0.22, 1, 0.36, 1)",
             margin: 0,
           }}
         >
@@ -44,8 +44,8 @@ const Section0Caption = memo(function Section0Caption({
             textShadow:
               "0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.9)",
             opacity: captionLines >= 2 ? 1 : 0,
-            transform: captionLines >= 2 ? "translateY(0)" : "translateY(20px)",
-            transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+            transform: captionLines >= 2 ? "translateY(0)" : "translateY(40px)",
+            transition: "opacity 1.6s cubic-bezier(0.22, 1, 0.36, 1), transform 1.6s cubic-bezier(0.22, 1, 0.36, 1)",
             margin: 0,
           }}
         >
@@ -62,8 +62,8 @@ const Section0Caption = memo(function Section0Caption({
             textShadow:
               "0 0 30px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.9)",
             opacity: captionLines >= 3 ? 1 : 0,
-            transform: captionLines >= 3 ? "translateY(0)" : "translateY(15px)",
-            transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
+            transform: captionLines >= 3 ? "translateY(0)" : "translateY(28px)",
+            transition: "opacity 2s cubic-bezier(0.22, 1, 0.36, 1), transform 2s cubic-bezier(0.22, 1, 0.36, 1)",
             letterSpacing: "0.15em",
           }}
         >

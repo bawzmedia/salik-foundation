@@ -325,15 +325,17 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 introOpacityRef.current = nextOpacity;
                 if (introOverlayElRef.current) introOverlayElRef.current.style.opacity = String(nextOpacity);
 
-                // Caption lines — appear after logo sequence (frame 200+)
-                if (f < 200) {
+                // Captions — first line begins at frame 195, overlapping the tail
+                // of the Salik fade-out (180-199) for a seamless handoff.
+                // Lines staggered 18 frames (~0.6 s) apart.
+                if (f < 195) {
                   setCaptionLines(0);
-                  setShowHadith(false); showHadithRef.current = false;
-                } else if (f < 214) {
+                  showHadithRef.current = false;
+                } else if (f < 213) {
                   setCaptionLines(1);
                   setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
-                } else if (f < 228) {
+                } else if (f < 231) {
                   setCaptionLines(2);
                   setShowHadith(true); showHadithRef.current = true;
                   setHadithDissolving(false);
@@ -648,10 +650,10 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
           />
         )}
 
-        {/* Section 0 — "500 YEARS OF DARKNESS" headline + subtitle */}
-        {showHadith && (
-          <Section0Caption dissolving={hadithDissolving} captionLines={captionLines} />
-        )}
+        {/* Section 0 — "500 YEARS OF DARKNESS" headline + subtitle.
+            Always in the DOM so CSS transitions fire correctly on first reveal
+            (mounting with opacity:1 would skip the transition). */}
+        <Section0Caption dissolving={hadithDissolving} captionLines={captionLines} />
 
         {/* Section quotes — positioned per scene */}
         {sectionQuote !== null && (
