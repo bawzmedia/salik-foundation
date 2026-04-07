@@ -8,52 +8,61 @@ import {
   RETRY_DELAY_MS,
   FALLBACK_TIMEOUT_MS,
   FLASH_FRAME_COUNT,
+  SECTIONS,
   getFramePath,
   getFlashFramePath,
   getResolutionTier,
+  frameToBatch,
+  getSectionBatchIndices,
 } from "@/lib/frames";
 
 interface UseFrameLoaderReturn {
-  frames: React.MutableRefObject<(HTMLImageElement | null)[]>;
-  flashFrames: React.MutableRefObject<(HTMLImageElement | null)[]>;
+  frames: React.MutableRefObject<(ImageBitmap | null)[]>;
+  flashFrames: React.MutableRefObject<(ImageBitmap | null)[]>;
   loadingProgress: number;
   isInitialLoadComplete: boolean;
   isFallback: boolean;
   updateCurrentFrame: (frameIndex: number) => void;
   waitForFrames: (startIdx: number, count: number) => Promise<void>;
+  evictSection: (sectionIndex: number) => void;
 }
 
-function loadImageWithRetry(
+/**
+ * Load a URL as a GPU-resident ImageBitmap.
+ * Using fetch → blob → createImageBitmap means the image is fully decoded and
+ * rasterized at load time, so ctx.drawImage() is a zero-cost GPU texture blit.
+ */
+async function loadBitmapWithRetry(
   src: string,
+  signal: AbortSignal,
   retries: number = MAX_RETRIES,
   delay: number = RETRY_DELAY_MS
-): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      if (img.decode) {
-        img.decode().then(() => resolve(img)).catch(() => resolve(img));
-      } else {
-        resolve(img);
-      }
-    };
-    img.onerror = () => {
-      if (retries > 0) {
-        setTimeout(() => {
-          loadImageWithRetry(src, retries - 1, delay).then(resolve).catch(reject);
-        }, delay);
-      } else {
-        reject(new Error(`Failed to load: ${src}`));
-      }
-    };
-    img.src = src;
-  });
+): Promise<ImageBitmap> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      const res = await fetch(src, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${src}`);
+      const blob = await res.blob();
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      return await createImageBitmap(blob);
+    } catch (err) {
+      const isAbort = err instanceof DOMException && err.name === "AbortError";
+      if (isAbort) throw err; // don't retry aborts
+      if (attempt === retries) throw err;
+      await new Promise((r) => setTimeout(r, delay * (attempt + 1)));
+    }
+  }
+  // TypeScript: unreachable, but satisfies return type
+  throw new Error(`Failed to load after retries: ${src}`);
 }
 
 export function useFrameLoader(): UseFrameLoaderReturn {
-  const frames = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
-  const flashFrames = useRef<(HTMLImageElement | null)[]>(new Array(FLASH_FRAME_COUNT).fill(null));
+  const frames = useRef<(ImageBitmap | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const flashFrames = useRef<(ImageBitmap | null)[]>(new Array(FLASH_FRAME_COUNT).fill(null));
   const loadedBatches = useRef<Set<number>>(new Set());
+  // AbortController per batch — allows cancelling in-flight fetches on eviction
+  const batchControllers = useRef<Map<number, AbortController>>(new Map());
   const [loadedCount, setLoadedCount] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
@@ -66,32 +75,39 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     return [start, Math.min(start + BATCH_SIZE - 1, TOTAL_FRAMES)];
   }, []);
 
-  const loadBatch = useCallback(async (batchIndex: number) => {
-    if (loadedBatches.current.has(batchIndex)) return;
-    loadedBatches.current.add(batchIndex);
+  const loadBatch = useCallback(
+    async (batchIndex: number) => {
+      if (loadedBatches.current.has(batchIndex)) return;
+      loadedBatches.current.add(batchIndex);
 
-    const [startFrame, endFrame] = getBatchRange(batchIndex);
+      const controller = new AbortController();
+      batchControllers.current.set(batchIndex, controller);
 
-    const promises = [];
-    for (let i = startFrame; i <= endFrame; i++) {
-      const idx = i - 1;
-      promises.push(
-        loadImageWithRetry(getFramePath(i, tier.current))
-          .then((img) => {
-            frames.current[idx] = img;
-            setLoadedCount((prev) => prev + 1);
-          })
-          .catch(() => {})
-      );
-    }
+      const [startFrame, endFrame] = getBatchRange(batchIndex);
 
-    await Promise.allSettled(promises);
-  }, [getBatchRange]);
+      const promises: Promise<void>[] = [];
+      for (let i = startFrame; i <= endFrame; i++) {
+        const idx = i - 1;
+        promises.push(
+          loadBitmapWithRetry(getFramePath(i, tier.current), controller.signal)
+            .then((bitmap) => {
+              frames.current[idx] = bitmap;
+              setLoadedCount((prev) => prev + 1);
+            })
+            .catch((err) => {
+              const isAbort = err instanceof DOMException && err.name === "AbortError";
+              if (!isAbort) {
+                // Silently degrade — drawFrameAtIndex will fall back to nearest loaded frame
+              }
+            })
+        );
+      }
 
-  const frameToBatch = useCallback((frameIndex: number): number => {
-    if (frameIndex < INITIAL_BATCH_SIZE) return 0;
-    return Math.floor((frameIndex - INITIAL_BATCH_SIZE) / BATCH_SIZE) + 1;
-  }, []);
+      await Promise.allSettled(promises);
+      batchControllers.current.delete(batchIndex);
+    },
+    [getBatchRange]
+  );
 
   const updateCurrentFrame = useCallback(
     (frameIndex: number) => {
@@ -105,7 +121,7 @@ export function useFrameLoader(): UseFrameLoaderReturn {
         }
       }
     },
-    [loadBatch, frameToBatch, getBatchRange]
+    [loadBatch, getBatchRange]
   );
 
   const waitForFrames = useCallback(
@@ -129,6 +145,40 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     [frames]
   );
 
+  /**
+   * Free GPU memory for a section that is no longer needed.
+   * Cancels in-flight fetches and closes ImageBitmaps.
+   * IMPORTANT: sets frames.current[i] = null BEFORE calling .close() so that
+   * the drawFrameAtIndex fallback walk never finds a closed bitmap.
+   * Removes batch indices from loadedBatches so they can be re-fetched
+   * (cheaply, from browser disk cache) if the user scrolls back.
+   */
+  const evictSection = useCallback((sectionIndex: number) => {
+    const s = SECTIONS[sectionIndex];
+    if (!s) return;
+
+    const batchIndices = getSectionBatchIndices(sectionIndex);
+
+    // Cancel any in-flight fetch requests for this section
+    batchIndices.forEach((b) => {
+      const ctrl = batchControllers.current.get(b);
+      if (ctrl) {
+        ctrl.abort();
+        batchControllers.current.delete(b);
+      }
+      loadedBatches.current.delete(b); // allow re-loading on scrollback
+    });
+
+    // Close ImageBitmaps — null FIRST to prevent drawFrameAtIndex finding a closed bitmap
+    for (let i = s.startFrame - 1; i < s.endFrame; i++) {
+      const bitmap = frames.current[i];
+      if (bitmap) {
+        frames.current[i] = null; // null before close — critical ordering
+        bitmap.close();
+      }
+    }
+  }, []);
+
   useEffect(() => {
     tier.current = getResolutionTier(window.innerWidth);
 
@@ -143,10 +193,11 @@ export function useFrameLoader(): UseFrameLoaderReturn {
 
     // Load flash frames if any
     if (FLASH_FRAME_COUNT > 0) {
+      const noop = new AbortController();
       for (let i = 1; i <= FLASH_FRAME_COUNT; i++) {
-        loadImageWithRetry(getFlashFramePath(i))
-          .then((img) => {
-            flashFrames.current[i - 1] = img;
+        loadBitmapWithRetry(getFlashFramePath(i), noop.signal)
+          .then((bitmap) => {
+            flashFrames.current[i - 1] = bitmap;
           })
           .catch(() => {});
       }
@@ -163,5 +214,6 @@ export function useFrameLoader(): UseFrameLoaderReturn {
     isFallback,
     updateCurrentFrame,
     waitForFrames,
+    evictSection,
   };
 }

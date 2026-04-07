@@ -130,3 +130,32 @@ export function getSectionProgress(section: Section): { start: number; end: numb
     end: section.endFrame / TOTAL_FRAMES,
   };
 }
+
+/** Maps a 0-indexed frame number to the batch index that contains it. */
+export function frameToBatch(frameIndex: number): number {
+  if (frameIndex < INITIAL_BATCH_SIZE) return 0;
+  return Math.floor((frameIndex - INITIAL_BATCH_SIZE) / BATCH_SIZE) + 1;
+}
+
+/** Returns all batch indices that cover a given section (0-indexed section). */
+export function getSectionBatchIndices(sectionIndex: number): number[] {
+  const s = SECTIONS[sectionIndex];
+  if (!s) return [];
+  const indices = new Set<number>();
+  for (let i = s.startFrame - 1; i < s.endFrame; i++) {
+    indices.add(frameToBatch(i));
+  }
+  return [...indices];
+}
+
+/** Returns adaptive prebuffer frame count based on connection speed.
+ *  Falls back to PREBUFFER_COUNT on browsers without navigator.connection (Safari). */
+export function getAdaptivePrebuffer(): number {
+  const conn = (navigator as { connection?: { effectiveType?: string } }).connection;
+  if (!conn) return PREBUFFER_COUNT;
+  switch (conn.effectiveType) {
+    case "4g": return 8;
+    case "3g": return 20;
+    default:   return PREBUFFER_COUNT;
+  }
+}

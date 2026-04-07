@@ -1,6 +1,6 @@
 import { useRef, useEffect, useImperativeHandle, forwardRef, useCallback, useState } from "react";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
-import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, PREBUFFER_COUNT, getFocalPointForFrame, DEFAULT_FOCAL_POINT } from "@/lib/frames";
+import { TOTAL_FRAMES, INITIAL_BATCH_SIZE, FLASH_FRAME_COUNT, SECTIONS, TARGET_FPS, getFocalPointForFrame, DEFAULT_FOCAL_POINT, getAdaptivePrebuffer } from "@/lib/frames";
 import type { FocalPoint } from "@/lib/frames";
 import IntroOverlay from "./overlays/IntroOverlay";
 import Section0Caption from "./overlays/Section0Caption";
@@ -20,6 +20,8 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
   function ScrollCanvas({ onProgressChange, onFallback }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+    // Cached cover-crop base dims (sw/sh constant per viewport+source size; only sx/sy vary per focal)
+    const cropBaseRef = useRef<{ sw: number; sh: number; srcW: number; srcH: number } | null>(null);
     const currentFrameRef = useRef(0);
     const isFlashingRef = useRef(false);
     const isPlayingRef = useRef(false);
@@ -43,7 +45,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     const scrollCooldownRef = useRef(false);
     const idleLoopRef = useRef<number | null>(null);
 
-    const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame, waitForFrames } =
+    const { frames, flashFrames, isInitialLoadComplete, isFallback, updateCurrentFrame, waitForFrames, evictSection } =
       useFrameLoader();
 
     useEffect(() => {
@@ -52,22 +54,30 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
     // Draw a frame to the canvas with cover crop behavior (Retina-aware)
     // Focal point shifts the crop origin so the subject stays visible on mobile
-    const drawFrame = useCallback((img: HTMLImageElement, focal: FocalPoint = DEFAULT_FOCAL_POINT) => {
+    const drawFrame = useCallback((img: ImageBitmap, focal: FocalPoint = DEFAULT_FOCAL_POINT) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
-      if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
       const ctx = ctxRef.current;
-      if (!ctx) return;
+      if (!canvas || !ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const displayW = canvas.width / dpr;
-      const displayH = canvas.height / dpr;
-      const imgW = img.naturalWidth;
-      const imgH = img.naturalHeight;
+      const imgW = img.width;
+      const imgH = img.height;
 
-      const scale = Math.max(displayW / imgW, displayH / imgH);
-      const sw = displayW / scale;
-      const sh = displayH / scale;
+      // Reuse cached sw/sh if source dimensions are unchanged (same for all frames in a tier)
+      let sw: number, sh: number;
+      const base = cropBaseRef.current;
+      if (base && base.srcW === imgW && base.srcH === imgH) {
+        sw = base.sw;
+        sh = base.sh;
+      } else {
+        const dpr = window.devicePixelRatio || 1;
+        const displayW = canvas.width / dpr;
+        const displayH = canvas.height / dpr;
+        const scale = Math.max(displayW / imgW, displayH / imgH);
+        sw = displayW / scale;
+        sh = displayH / scale;
+        cropBaseRef.current = { sw, sh, srcW: imgW, srcH: imgH };
+      }
+
       // Anchor crop to focal point, clamped so we never read outside the image
       const sx = Math.max(0, Math.min(imgW - sw, focal.x * imgW - sw / 2));
       const sy = Math.max(0, Math.min(imgH - sh, focal.y * imgH - sh / 2));
@@ -78,7 +88,7 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
     // Draw frame at given index (hold last loaded if target isn't ready)
     const drawFrameAtIndex = useCallback(
       (index: number) => {
-        let frameImg = frames.current[index];
+        let frameImg: ImageBitmap | null = frames.current[index];
         if (!frameImg) {
           for (let i = index - 1; i >= 0; i--) {
             if (frames.current[i]) {
@@ -102,12 +112,18 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
+        cropBaseRef.current = null; // invalidate crop cache on resize
+        // Re-apply context settings (canvas resize resets context state)
+        if (ctxRef.current) {
+          ctxRef.current.imageSmoothingEnabled = true;
+          ctxRef.current.imageSmoothingQuality = "low";
+        }
       }
       const idx = currentFrameRef.current;
-      let frameImg = frames.current[idx];
+      let frameImg: ImageBitmap | null = frames.current[idx];
       if (!frameImg) {
         for (let i = idx - 1; i >= 0; i--) {
-          if (frames.current[i]) { frameImg = frames.current[i]; break; }
+          if (frames.current[i]) { frameImg = frames.current[i] as ImageBitmap; break; }
         }
       }
       if (frameImg) drawFrame(frameImg, getFocalPointForFrame(idx));
@@ -264,6 +280,13 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
                 }
               }
 
+              // Evict sections far enough away to free GPU memory.
+              // Keep current section ± 1 so scrollback feels instant.
+              const evictTarget = reverse ? sectionIndex + 2 : sectionIndex - 2;
+              if (evictTarget >= 0 && evictTarget < SECTIONS.length) {
+                evictSection(evictTarget);
+              }
+
               resolve();
               return;
             }
@@ -396,12 +419,12 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
             requestAnimationFrame(playNext);
           };
           // Wait for the first PREBUFFER_COUNT frames before starting rAF loop
-          waitForFrames(frameIdx, PREBUFFER_COUNT).then(() => {
+          waitForFrames(frameIdx, getAdaptivePrebuffer()).then(() => {
             requestAnimationFrame(playNext);
           });
         });
       },
-      [drawFrameAtIndex, updateCurrentFrame, waitForFrames, onProgressChange, stopIdleLoop]
+      [drawFrameAtIndex, updateCurrentFrame, waitForFrames, onProgressChange, stopIdleLoop, evictSection]
     );
 
     // Play multiple sections back-to-back
@@ -534,13 +557,10 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
 
           if (!hasFlashFrames) {
             const canvas = canvasRef.current;
-            if (canvas) {
-              if (!ctxRef.current) ctxRef.current = canvas.getContext("2d");
-              const ctx = ctxRef.current;
-              if (ctx) {
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-              }
+            const ctx = ctxRef.current;
+            if (canvas && ctx) {
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
             resolve();
             return;
@@ -599,8 +619,19 @@ const ScrollCanvas = forwardRef<ScrollCanvasHandle, ScrollCanvasProps>(
         <canvas
           ref={(el) => {
             (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
-            ctxRef.current = null; // reset cached context when canvas element changes
-            if (el) resizeCanvas();
+            if (el) {
+              // Initialize context once with performance hints
+              const ctx = el.getContext("2d", { alpha: false, desynchronized: true });
+              if (ctx) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "low"; // bilinear — faster than default bicubic
+              }
+              ctxRef.current = ctx;
+              cropBaseRef.current = null; // invalidate crop cache for new canvas
+              resizeCanvas();
+            } else {
+              ctxRef.current = null;
+            }
           }}
           className="fixed left-0 top-0 w-screen h-screen"
           style={{ zIndex: 2 }}
