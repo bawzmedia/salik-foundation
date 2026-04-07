@@ -19,14 +19,14 @@ const IntroOverlay = memo(
         {phase === "ummah" && (
           <div className="flex flex-col items-center gap-5">
             <p
-              className="text-sm md:text-base tracking-[0.4em] uppercase"
+              className="text-2xl md:text-3xl tracking-[0.3em] uppercase"
               style={{
                 color: "#ffffff",
-                fontFamily: "'Montserrat', 'Arial', sans-serif",
-                fontWeight: 300,
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontWeight: 400,
                 textShadow:
                   "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
-                letterSpacing: "0.4em",
+                letterSpacing: "0.3em",
               }}
             >
               Produced by
